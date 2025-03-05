@@ -1,3 +1,7 @@
+import Menu1 from "../assets/menu-1.jpg";
+import Menu2 from "../assets/menu-2.jpg";
+import Menu3 from "../assets/menu-3.jpg";
+
 const MenuItem = ({ image, price, name, description }) => (
   <div className="flex items-center mb-8">
     <div className="w-1/4 sm:w-1/6">
@@ -15,16 +19,49 @@ const Menu = () => {
   const menuItems = {
     hot: [
       {
-        image: "img/menu-1.jpg",
+        image: Menu1,
         price: "5",
         name: "Black Coffee",
         description:
           "Sit lorem ipsum et diam elitr est dolor sed duo guberg sea et et lorem dolor",
       },
-      // Add other hot coffee items...
+      {
+        image: Menu2,
+        price: "5",
+        name: "Black Coffee",
+        description:
+          "Sit lorem ipsum et diam elitr est dolor sed duo guberg sea et et lorem dolor",
+      },
+      {
+        image: Menu3,
+        price: "5",
+        name: "Black Coffee",
+        description:
+          "Sit lorem ipsum et diam elitr est dolor sed duo guberg sea et et lorem dolor",
+      },
     ],
     cold: [
-      // Add cold coffee items...
+      {
+        image: Menu1,
+        price: "5",
+        name: "Black Coffee",
+        description:
+          "Sit lorem ipsum et diam elitr est dolor sed duo guberg sea et et lorem dolor",
+      },
+      {
+        image: Menu2,
+        price: "5",
+        name: "Black Coffee",
+        description:
+          "Sit lorem ipsum et diam elitr est dolor sed duo guberg sea et et lorem dolor",
+      },
+      {
+        image: Menu3,
+        price: "5",
+        name: "Black Coffee",
+        description:
+          "Sit lorem ipsum et diam elitr est dolor sed duo guberg sea et et lorem dolor",
+      },
     ],
   };
 

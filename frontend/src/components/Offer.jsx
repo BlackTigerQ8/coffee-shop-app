@@ -1,6 +1,6 @@
 const Offer = () => {
   return (
-    <div className="relative my-20 py-20 text-center bg-secondary text-white overlay-top overlay-bottom">
+    <div className="relative my-20 py-20 text-center bg-secondary text-white overlay-top overlay-bottom offer">
       <div className="container mx-auto py-20">
         <h1 className="text-primary text-6xl mt-3">50% OFF</h1>
         <h1 className="text-4xl mb-3">Sunday Special Offer</h1>

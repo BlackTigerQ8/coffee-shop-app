@@ -13,6 +13,7 @@ const BackToTop = () => {
     };
 
     window.addEventListener("scroll", toggleVisibility);
+
     return () => window.removeEventListener("scroll", toggleVisibility);
   }, []);
 
@@ -24,14 +25,16 @@ const BackToTop = () => {
   };
 
   return (
-    <button
-      onClick={scrollToTop}
-      className={`fixed right-6 bottom-6 z-50 p-4 bg-primary text-white rounded-lg shadow-lg transition-opacity duration-300 hover:bg-opacity-90 ${
-        isVisible ? "opacity-100" : "opacity-0"
-      }`}
+    <a
+      href="#"
+      onClick={(e) => {
+        e.preventDefault();
+        scrollToTop();
+      }}
+      className={`back-to-top btn-lg btn-primary ${isVisible ? "show" : ""}`}
     >
-      <i className="fa fa-angle-double-up text-lg"></i>
-    </button>
+      <i className="fa fa-angle-double-up"></i>
+    </a>
   );
 };
 

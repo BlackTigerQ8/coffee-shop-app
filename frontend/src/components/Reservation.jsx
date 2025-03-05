@@ -1,7 +1,7 @@
 const Reservation = () => {
   return (
     <div className="container mx-auto my-20">
-      <div className="relative bg-secondary text-white p-8 lg:p-0 overlay-top overlay-bottom">
+      <div className="relative bg-secondary text-white p-8 lg:p-0 overlay-top overlay-bottom reservation">
         <div className="grid grid-cols-1 lg:grid-cols-2">
           {/* Left Side */}
           <div className="my-5 lg:my-0">
