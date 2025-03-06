@@ -87,7 +87,7 @@ const Carousel = () => {
             alt={slides[activeSlide].alt}
             className="w-full h-full object-cover object-center"
           />
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-center bg-black bg-opacity-50 px-4">
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center bg-dark bg-opacity-50 px-4">
             <motion.h2
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}

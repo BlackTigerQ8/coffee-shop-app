@@ -2,9 +2,10 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import TranslateOutlinedIcon from "@mui/icons-material/TranslateOutlined";
-import { useMediaQuery } from "@mui/material";
+import { useMediaQuery, Badge } from "@mui/material";
+import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 
-const Topbar = () => {
+const Topbar = ({ cart }) => {
   const isNonMobile = useMediaQuery("(min-width: 600px)");
   const { t, i18n } = useTranslation();
   const [languageAnchorEl, setLanguageAnchorEl] = useState(null);
@@ -29,10 +30,14 @@ const Topbar = () => {
     handleCloseLanguageMenu();
   };
 
+  const getTotalItems = () => {
+    return cart?.reduce((total, item) => total + item.quantity, 0) || 0;
+  };
+
   const links = [
     { id: 1, title: t("home"), url: "/" },
-    { id: 2, title: t("about"), url: "/about" },
-    { id: 3, title: t("contact"), url: "/contact" },
+    { id: 2, title: t("menu"), url: "/menu" },
+    { id: 3, title: t("login"), url: "/login" },
   ];
 
   return (
@@ -87,6 +92,23 @@ const Topbar = () => {
                     {item.title}
                   </Link>
                 ))}
+                <Link
+                  to="/cart"
+                  className="text-[#FFF8F0] hover:text-primary transition-colors"
+                >
+                  <Badge
+                    badgeContent={getTotalItems()}
+                    color="primary"
+                    sx={{
+                      "& .MuiBadge-badge": {
+                        backgroundColor: "#DA9F5B",
+                        color: "white",
+                      },
+                    }}
+                  >
+                    <ShoppingCartIcon />
+                  </Badge>
+                </Link>
               </nav>
             </div>
           )}

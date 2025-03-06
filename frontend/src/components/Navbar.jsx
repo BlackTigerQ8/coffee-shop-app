@@ -5,10 +5,14 @@ import TranslateOutlinedIcon from "@mui/icons-material/TranslateOutlined";
 import HomeIcon from "@mui/icons-material/Home";
 import InfoIcon from "@mui/icons-material/Info";
 import ContactMailIcon from "@mui/icons-material/ContactMail";
+import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
+import RestaurantMenuIcon from "@mui/icons-material/RestaurantMenu";
+import PersonIcon from "@mui/icons-material/Person";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { Badge } from "@mui/material";
 
-const Navbar = () => {
+const Navbar = ({ cart }) => {
   const { t, i18n } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [languageAnchorEl, setLanguageAnchorEl] = useState(false);
@@ -34,6 +38,10 @@ const Navbar = () => {
   const toggleLanguage = (language) => {
     i18n.changeLanguage(language);
     setLanguageAnchorEl(false);
+  };
+
+  const getTotalItems = () => {
+    return cart?.reduce((total, item) => total + item.quantity, 0) || 0;
   };
 
   const menuVariants = {
@@ -82,8 +90,27 @@ const Navbar = () => {
 
   const links = [
     { id: 1, title: t("home"), url: "/", icon: <HomeIcon /> },
-    { id: 2, title: t("about"), url: "/about", icon: <InfoIcon /> },
-    { id: 3, title: t("contact"), url: "/contact", icon: <ContactMailIcon /> },
+    { id: 2, title: t("menu"), url: "/menu", icon: <RestaurantMenuIcon /> },
+    { id: 3, title: t("login"), url: "/login", icon: <PersonIcon /> },
+    {
+      id: 4,
+      title: t("cart"),
+      url: "/cart",
+      icon: (
+        <Badge
+          badgeContent={getTotalItems()}
+          color="primary"
+          sx={{
+            "& .MuiBadge-badge": {
+              backgroundColor: "#DA9F5B",
+              color: "white",
+            },
+          }}
+        >
+          <ShoppingCartIcon />
+        </Badge>
+      ),
+    },
   ];
 
   return (

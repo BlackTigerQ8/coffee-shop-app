@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 const Footer = () => {
   return (
     <footer className="bg-secondary text-white mt-20 pt-20 relative overlay-top footer">
@@ -81,15 +83,15 @@ const Footer = () => {
         <div className="text-center border-t border-gray-800 mt-8 py-4">
           <p className="mb-2">
             Copyright &copy;{" "}
-            <a href="#" className="font-bold">
-              Domain
-            </a>
+            <Link to="/" className="font-bold">
+              coffeeshop.com
+            </Link>
             . All Rights Reserved.
           </p>
           <p>
             Designed by{" "}
-            <a href="https://htmlcodex.com" className="font-bold">
-              HTML Codex
+            <a href="https://aaalenezi.com" className="font-bold">
+              Eng. Abdullah Alenezi
             </a>
           </p>
         </div>
