@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { FaChevronUp } from "react-icons/fa";
 
 const BackToTop = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -13,7 +14,6 @@ const BackToTop = () => {
     };
 
     window.addEventListener("scroll", toggleVisibility);
-
     return () => window.removeEventListener("scroll", toggleVisibility);
   }, []);
 
@@ -25,16 +25,14 @@ const BackToTop = () => {
   };
 
   return (
-    <a
-      href="#"
-      onClick={(e) => {
-        e.preventDefault();
-        scrollToTop();
-      }}
-      className={`back-to-top btn-lg btn-primary ${isVisible ? "show" : ""}`}
+    <button
+      onClick={scrollToTop}
+      className={`fixed bottom-8 right-8 w-12 h-12 bg-primary rounded-full flex items-center justify-center shadow-lg hover:bg-secondary transition-colors duration-300 animate-bounce ${
+        isVisible ? "opacity-100" : "opacity-0 pointer-events-none"
+      }`}
     >
-      <i className="fa fa-angle-double-up"></i>
-    </a>
+      <FaChevronUp className="text-white text-xl" />
+    </button>
   );
 };
 

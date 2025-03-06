@@ -49,7 +49,7 @@ const About = () => {
   };
 
   return (
-    <div className="py-16" id="about" ref={ref}>
+    <div id="about" ref={ref}>
       <motion.div
         className="container mx-auto px-4"
         variants={containerVariants}
@@ -57,7 +57,10 @@ const About = () => {
         animate={isInView ? "visible" : "hidden"}
       >
         {/* Section Title */}
-        <motion.div className="text-center mb-16" variants={itemVariants}>
+        <motion.div
+          className="text-center section-title"
+          variants={itemVariants}
+        >
           <h4 className="text-primary uppercase tracking-[5px]">About Us</h4>
           <h1 className="text-4xl font-bold">Serving Since 1950</h1>
         </motion.div>

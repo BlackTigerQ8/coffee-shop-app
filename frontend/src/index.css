@@ -6,7 +6,7 @@
 
 @layer base {
   body {
-    font-family: "Roboto", sans-serif;
+    font-family: "Montserrat", sans-serif;
     color: #656565;
     line-height: 1.5;
     background-color: #fff8f0;
@@ -21,7 +21,18 @@
     color: #33211d;
     font-weight: 700;
     margin-bottom: 0.5rem;
+    font-family: "Montserrat", sans-serif;
   }
+}
+
+p {
+  font-family: "Montserrat", sans-serif;
+  font-weight: 400;
+}
+
+::selection {
+  background-color: #da9f5b;
+  color: #33211d;
 }
 
 @layer components {
