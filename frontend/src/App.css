@@ -337,6 +337,32 @@ h6 {
   border-radius: 5px;
 }
 
+.avatar-upload-zone {
+  position: relative;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.avatar-upload-zone.dragging {
+  transform: scale(1.05);
+  box-shadow: 0 0 0 4px rgba(218, 159, 91, 0.3);
+}
+
+.avatar-upload-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background-color: rgba(0, 0, 0, 0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.avatar-upload-zone:hover .avatar-upload-overlay {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
 /* Back to Top Button */
 .back-to-top {
   position: fixed;

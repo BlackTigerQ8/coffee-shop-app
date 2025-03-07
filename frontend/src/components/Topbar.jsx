@@ -38,11 +38,12 @@ const Topbar = ({ cart }) => {
     { id: 1, title: t("home"), url: "/" },
     { id: 2, title: t("menu"), url: "/menu" },
     { id: 3, title: t("login"), url: "/login" },
+    { id: 4, title: t("profile"), url: "/profile" },
   ];
 
   return (
     <div
-      className={`fixed top-0 w-full z-50 transition-all duration-300 ${
+      className={`fixed top-0 w-full z-40 transition-all duration-300 ${
         isScrolled
           ? `bg-secondary/70 backdrop-blur-md text-light`
           : `bg-transparent text-light`
@@ -50,7 +51,11 @@ const Topbar = ({ cart }) => {
     >
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between py-4">
-          <h1 className="text-2xl font-semibold text-[#FFF8F0]">
+          <h1
+            className={`${
+              isNonMobile ? "text-2xl" : "text-sm"
+            } font-semibold text-[#FFF8F0]`}
+          >
             {t("Coffee Shop")}
           </h1>
 

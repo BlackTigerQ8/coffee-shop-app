@@ -12,15 +12,15 @@ const Footer = () => {
             </h4>
             <p className="mb-2">
               <i className="fa fa-map-marker-alt mr-2"></i>
-              123 Street, New York, USA
+              Jaber Al-Ahmad, Kuwait City, Kuwait
             </p>
             <p className="mb-2">
               <i className="fa fa-phone-alt mr-2"></i>
-              +012 345 67890
+              +965 66850080
             </p>
             <p>
               <i className="fa fa-envelope mr-2"></i>
-              info@example.com
+              BlackTigerQ8@gmail.com
             </p>
           </div>
 

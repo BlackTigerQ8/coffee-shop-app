@@ -1,8 +1,10 @@
 import { motion } from "framer-motion";
 import { useInView } from "framer-motion";
 import { useRef } from "react";
+import { useMediaQuery } from "@mui/material";
 
 const Header = ({ title, subtitle }) => {
+  const isNonMobile = useMediaQuery("(min-width: 600px)");
   const ref = useRef(null);
   const isInView = useInView(ref, { margin: "-100px" });
 
@@ -50,7 +52,9 @@ const Header = ({ title, subtitle }) => {
     >
       <div className="container mx-auto pt-20">
         <motion.h1
-          className="text-primary text-6xl mt-3 uppercase"
+          className={`text-primary ${
+            isNonMobile ? "text-6xl" : "text-4xl"
+          } mt-3 uppercase`}
           variants={itemVariants}
         >
           {title}

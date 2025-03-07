@@ -91,7 +91,12 @@ const Navbar = ({ cart }) => {
   const links = [
     { id: 1, title: t("home"), url: "/", icon: <HomeIcon /> },
     { id: 2, title: t("menu"), url: "/menu", icon: <RestaurantMenuIcon /> },
-    { id: 3, title: t("login"), url: "/login", icon: <PersonIcon /> },
+    {
+      id: 3,
+      title: t("user_profile"),
+      url: "/profile",
+      icon: <PersonIcon />,
+    },
     {
       id: 4,
       title: t("cart"),
@@ -111,12 +116,13 @@ const Navbar = ({ cart }) => {
         </Badge>
       ),
     },
+    { id: 5, title: t("login"), url: "/login", icon: <PersonIcon /> },
   ];
 
   return (
     <>
       {/* Hamburger Button */}
-      <div className="fixed top-4 right-4 z-[60]">
+      <div className="fixed top-2 right-4 z-[60]">
         <Hamburger
           toggled={isOpen}
           toggle={setIsOpen}
@@ -145,7 +151,7 @@ const Navbar = ({ cart }) => {
                     >
                       <Link
                         to={link.url}
-                        className="group text-light flex items-center gap-2 uppercase nav-link"
+                        className="group text-light flex items-center gap-2 uppercase text-sm nav-link"
                         onClick={() => setIsOpen(false)}
                       >
                         <span className="text-light flex items-center group-hover:text-primary transition-colors duration-300">

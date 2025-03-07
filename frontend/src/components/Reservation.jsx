@@ -1,41 +1,44 @@
+import React from "react";
 import { motion } from "framer-motion";
 import { useInView } from "framer-motion";
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { useForm, Controller } from "react-hook-form";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import {
-  FaUser,
-  FaEnvelope,
-  FaCalendar,
-  FaClock,
-  FaUsers,
-} from "react-icons/fa";
+  TextField,
+  InputAdornment,
+  Button,
+  Select,
+  MenuItem,
+  FormControl,
+  FormHelperText,
+} from "@mui/material";
+import {
+  Person as PersonIcon,
+  Email as EmailIcon,
+  CalendarToday as CalendarIcon,
+  Schedule as ClockIcon,
+  Group as GroupIcon,
+} from "@mui/icons-material";
 
-const InputField = ({ icon: Icon, error, children }) => (
-  <motion.div className="relative w-full" whileTap={{ scale: 0.995 }}>
-    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-primary z-10">
-      <Icon />
-    </div>
-    {children}
-    {error && (
-      <span className="text-red-500 text-sm absolute -bottom-6 left-0">
-        {error}
-      </span>
-    )}
-  </motion.div>
-);
-
-const inputStyles =
-  "w-full p-4 pl-12 bg-[#33211D] border border-primary text-white rounded focus:outline-none focus:border-2 transition-all duration-300 placeholder:text-gray-400";
+// Add this custom input component
+const CustomInput = React.forwardRef(({ value, onClick, ...props }, ref) => (
+  <input
+    {...props}
+    value={value}
+    onClick={onClick}
+    ref={ref}
+    className="w-full bg-transparent text-white outline-none"
+  />
+));
 
 const Reservation = () => {
   const ref = useRef(null);
   const isInView = useInView(ref, { margin: "-100px" });
   const {
-    register,
-    handleSubmit,
     control,
+    handleSubmit,
     formState: { errors },
   } = useForm({
     defaultValues: {
@@ -67,6 +70,57 @@ const Reservation = () => {
       opacity: 1,
       y: 0,
       transition: { duration: 0.5 },
+    },
+  };
+
+  const textFieldStyles = {
+    "& .MuiOutlinedInput-root": {
+      color: "white",
+      "& fieldset": {
+        borderColor: "#DA9F5B",
+      },
+      "&:hover fieldset": {
+        borderColor: "#c48f51",
+      },
+      "&.Mui-focused fieldset": {
+        borderColor: "#DA9F5B",
+      },
+      "& input::placeholder": {
+        color: "rgba(255, 255, 255, 0.5)",
+      },
+    },
+    "& .MuiInputLabel-root": {
+      color: "rgba(255, 255, 255, 0.7)",
+      "&.Mui-focused": {
+        color: "#DA9F5B",
+      },
+    },
+    "& .MuiInputAdornment-root": {
+      color: "#DA9F5B",
+    },
+    "& .MuiFormHelperText-root": {
+      color: "#f44336",
+      marginLeft: 0,
+    },
+  };
+
+  const datePickerWrapperStyles = {
+    "& .react-datepicker": {
+      backgroundColor: "#33211D",
+      border: "1px solid #DA9F5B",
+    },
+    "& .react-datepicker__header": {
+      backgroundColor: "#DA9F5B",
+      borderBottom: "none",
+    },
+    "& .react-datepicker__time-container": {
+      borderLeft: "1px solid #DA9F5B",
+    },
+    "& .react-datepicker__time": {
+      backgroundColor: "#33211D",
+    },
+    "& .react-datepicker__time-box": {
+      borderRadius: "0",
     },
   };
 
@@ -112,9 +166,9 @@ const Reservation = () => {
             </div>
           </motion.div>
 
-          {/* Right Side */}
+          {/* Right Side - Updated Form */}
           <motion.div
-            className="bg-[rgba(51,33,29,0.8)] p-8 lg:p-20 rounded-lg"
+            className="bg-[rgba(51,33,29,0.8)] p-8 pt-0 lg:p-20 rounded-lg"
             variants={itemVariants}
           >
             <motion.h1
@@ -124,104 +178,198 @@ const Reservation = () => {
               Book Your Table
             </motion.h1>
             <motion.form
-              className="space-y-8"
+              className="space-y-6"
               onSubmit={handleSubmit(onSubmit)}
               variants={itemVariants}
             >
-              <InputField icon={FaUser} error={errors.name?.message}>
-                <input
-                  {...register("name", {
-                    required: "Name is required",
-                    minLength: {
-                      value: 2,
-                      message: "Name must be at least 2 characters",
-                    },
-                  })}
-                  placeholder="Your Name"
-                  className={inputStyles}
-                />
-              </InputField>
+              <Controller
+                name="name"
+                control={control}
+                rules={{
+                  required: "Name is required",
+                  minLength: {
+                    value: 2,
+                    message: "Name must be at least 2 characters",
+                  },
+                }}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    fullWidth
+                    label="Your Name"
+                    error={!!errors.name}
+                    helperText={errors.name?.message}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <PersonIcon />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={textFieldStyles}
+                  />
+                )}
+              />
 
-              <InputField icon={FaEnvelope} error={errors.email?.message}>
-                <input
-                  {...register("email", {
-                    required: "Email is required",
-                    pattern: {
-                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                      message: "Invalid email address",
-                    },
-                  })}
-                  placeholder="Your Email"
-                  className={inputStyles}
-                />
-              </InputField>
+              <Controller
+                name="email"
+                control={control}
+                rules={{
+                  required: "Email is required",
+                  pattern: {
+                    value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                    message: "Invalid email address",
+                  },
+                }}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    fullWidth
+                    label="Your Email"
+                    error={!!errors.email}
+                    helperText={errors.email?.message}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <EmailIcon />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={textFieldStyles}
+                  />
+                )}
+              />
 
-              <InputField icon={FaCalendar} error={errors.date?.message}>
-                <Controller
-                  control={control}
-                  name="date"
-                  rules={{ required: "Date is required" }}
-                  render={({ field }) => (
-                    <DatePicker
-                      selected={field.value}
-                      onChange={(date) => field.onChange(date)}
-                      placeholderText="Select Date"
-                      className={inputStyles}
-                      minDate={new Date()}
-                      dateFormat="MMMM d, yyyy"
+              <Controller
+                name="date"
+                control={control}
+                rules={{ required: "Date is required" }}
+                render={({ field }) => (
+                  <FormControl fullWidth error={!!errors.date}>
+                    <TextField
+                      fullWidth
+                      label="Select Date"
+                      value={
+                        field.value ? field.value.toLocaleDateString() : ""
+                      }
+                      error={!!errors.date}
+                      helperText={errors.date?.message}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <CalendarIcon />
+                          </InputAdornment>
+                        ),
+                        readOnly: true,
+                      }}
+                      sx={textFieldStyles}
                     />
-                  )}
-                />
-              </InputField>
+                    <div className="absolute opacity-0 w-full">
+                      <DatePicker
+                        selected={field.value}
+                        onChange={(date) => field.onChange(date)}
+                        minDate={new Date()}
+                        customInput={<CustomInput />}
+                        dateFormat="MMMM d, yyyy"
+                      />
+                    </div>
+                  </FormControl>
+                )}
+              />
 
-              <InputField icon={FaClock} error={errors.time?.message}>
-                <Controller
-                  control={control}
-                  name="time"
-                  rules={{ required: "Time is required" }}
-                  render={({ field }) => (
-                    <DatePicker
-                      selected={field.value}
-                      onChange={(date) => field.onChange(date)}
-                      placeholderText="Select Time"
-                      showTimeSelect
-                      showTimeSelectOnly
-                      timeIntervals={30}
-                      timeCaption="Time"
-                      dateFormat="h:mm aa"
-                      className={inputStyles}
+              <Controller
+                name="time"
+                control={control}
+                rules={{ required: "Time is required" }}
+                render={({ field }) => (
+                  <FormControl fullWidth error={!!errors.time}>
+                    <TextField
+                      fullWidth
+                      label="Select Time"
+                      value={
+                        field.value
+                          ? field.value.toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })
+                          : ""
+                      }
+                      error={!!errors.time}
+                      helperText={errors.time?.message}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <ClockIcon />
+                          </InputAdornment>
+                        ),
+                        readOnly: true,
+                      }}
+                      sx={textFieldStyles}
                     />
-                  )}
-                />
-              </InputField>
+                    <div className="absolute opacity-0 w-full">
+                      <DatePicker
+                        selected={field.value}
+                        onChange={(date) => field.onChange(date)}
+                        showTimeSelect
+                        showTimeSelectOnly
+                        timeIntervals={30}
+                        timeCaption="Time"
+                        dateFormat="h:mm aa"
+                        customInput={<CustomInput />}
+                      />
+                    </div>
+                  </FormControl>
+                )}
+              />
 
-              <InputField icon={FaUsers} error={errors.persons?.message}>
-                <select
-                  {...register("persons", {
-                    required: "Please select number of persons",
-                  })}
-                  className={inputStyles}
-                >
-                  <option value="" className="bg-secondary">
-                    Select Persons
-                  </option>
-                  {[1, 2, 3, 4, 5, 6].map((num) => (
-                    <option key={num} value={num} className="bg-secondary">
-                      {num} {num === 1 ? "Person" : "People"}
-                    </option>
-                  ))}
-                </select>
-              </InputField>
+              <Controller
+                name="persons"
+                control={control}
+                rules={{ required: "Please select number of persons" }}
+                render={({ field }) => (
+                  <FormControl fullWidth error={!!errors.persons}>
+                    <TextField
+                      {...field}
+                      select
+                      label="Select Persons"
+                      error={!!errors.persons}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <GroupIcon />
+                          </InputAdornment>
+                        ),
+                      }}
+                      sx={textFieldStyles}
+                    >
+                      {[1, 2, 3, 4, 5, 6].map((num) => (
+                        <MenuItem key={num} value={num}>
+                          {num} {num === 1 ? "Person" : "People"}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                    {errors.persons && (
+                      <FormHelperText>{errors.persons.message}</FormHelperText>
+                    )}
+                  </FormControl>
+                )}
+              />
 
-              <motion.button
+              <Button
                 type="submit"
-                className="w-full btn-primary py-4 font-bold rounded-md mt-8"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                transition={{ duration: 0.2 }}
+                fullWidth
+                variant="contained"
+                sx={{
+                  backgroundColor: "#DA9F5B",
+                  py: 1.5,
+                  mt: 2,
+                  "&:hover": {
+                    backgroundColor: "#c48f51",
+                  },
+                }}
               >
                 Book Now
-              </motion.button>
+              </Button>
             </motion.form>
           </motion.div>
         </div>

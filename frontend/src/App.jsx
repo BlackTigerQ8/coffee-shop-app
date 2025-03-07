@@ -8,6 +8,10 @@ import Topbar from "./components/Topbar";
 import LandingPage from "./pages/landingPage";
 import MenuPage from "./pages/menuPage";
 import CartPage from "./pages/CartPage";
+import CheckoutPage from "./pages/CheckoutPage";
+import UserAuthPage from "./pages/UserAuthPage";
+import OrderConfirmationPage from "./pages/OrderConfirmationPage";
+import UserProfilePage from "./pages/UserProfilePage";
 
 function App() {
   const isNonMobile = useMediaQuery("(min-width: 600px)");
@@ -27,6 +31,13 @@ function App() {
           path="/cart"
           element={<CartPage cart={cart} setCart={setCart} />}
         />
+        <Route
+          path="/checkout"
+          element={<CheckoutPage cart={cart} setCart={setCart} />}
+        />
+        <Route path="/order-confirmation" element={<OrderConfirmationPage />} />
+        <Route path="/login" element={<UserAuthPage />} />
+        <Route path="/profile" element={<UserProfilePage />} />
       </Routes>
     </div>
   );
