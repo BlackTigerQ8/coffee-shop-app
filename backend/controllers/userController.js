@@ -11,15 +11,7 @@ const getAllusers = async (req, res) => {
     let query = {};
     const { role } = req.query;
 
-    // If user is a barista, only return their assigned customers
-    if (req.user.role === "Barista") {
-      query = {
-        $or: [
-          { _id: req.user._id }, // Include the barista themselves
-          { role: "Customer", barista: req.user._id }, // Include their customers
-        ],
-      };
-    } else if (req.user.role === "Admin") {
+    if (req.user.role === "Admin") {
       // If a specific role is requested (e.g., for coach selection)
       if (req.query.role) {
         query.role = req.query.role;
@@ -35,10 +27,7 @@ const getAllusers = async (req, res) => {
       });
     }
 
-    const users = await User.find(query).populate(
-      "barista",
-      "firstName lastName _id role"
-    );
+    const users = await User.find(query);
 
     res.status(200).json({
       status: "Success",
@@ -94,6 +83,31 @@ const getUser = async (req, res) => {
 // @access  Private/Admin
 const createUser = async (req, res) => {
   try {
+    // If someone is logged in (admin), they can set any role
+    if (req.user && req.user.role === "Admin") {
+      // Admin can create any type of user
+      const uploadedFile = req.file;
+      const filePath = uploadedFile ? uploadedFile.path : null;
+      const newUser = await User.create({
+        firstName: req.body.firstName,
+        lastName: req.body.lastName,
+        email: req.body.email,
+        phone: req.body.phone,
+        role: req.body.role, // Admin can set any role
+        password: req.body.password,
+        confirmPassword: req.body.confirmPassword,
+        image: filePath,
+      });
+
+      await newUser.save({ validateBeforeSave: false });
+
+      return res.status(201).json({
+        status: "Success",
+        data: { user: newUser },
+      });
+    }
+
+    // For public registration, force role to be "Customer"
     const uploadedFile = req.file;
     const filePath = uploadedFile ? uploadedFile.path : null;
     const newUser = await User.create({
@@ -101,7 +115,7 @@ const createUser = async (req, res) => {
       lastName: req.body.lastName,
       email: req.body.email,
       phone: req.body.phone,
-      role: req.body.role,
+      role: "Customer", // Force role to be Customer for public registration
       password: req.body.password,
       confirmPassword: req.body.confirmPassword,
       image: filePath,
@@ -111,9 +125,7 @@ const createUser = async (req, res) => {
 
     res.status(201).json({
       status: "Success",
-      data: {
-        user: newUser,
-      },
+      data: { user: newUser },
     });
   } catch (error) {
     res.status(500).json({
@@ -193,6 +205,13 @@ const deleteUser = async (req, res) => {
 // @access  Public
 const loginUser = async (req, res) => {
   const { emailOrPhone, password } = req.body;
+
+  if (!emailOrPhone || !password) {
+    return res.status(400).json({
+      status: "Error",
+      message: "Please provide email/phone and password",
+    });
+  }
 
   try {
     // Check if input is email or phone

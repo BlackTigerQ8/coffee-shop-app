@@ -25,12 +25,13 @@ const userSchema = new mongoose.Schema({
   },
   dateOfBirth: {
     type: Date,
-    required: [true, "Date of birth is required"],
+    // required: [true, "Date of birth is required"],
   },
   role: {
     type: String,
     enum: USER_ROLES,
     required: true,
+    default: "Customer",
   },
   image: {
     type: String,

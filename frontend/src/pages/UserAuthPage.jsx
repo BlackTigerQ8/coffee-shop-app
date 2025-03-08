@@ -1,8 +1,9 @@
 import { motion } from "framer-motion";
 import { useInView } from "framer-motion";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useForm, Controller } from "react-hook-form";
-import { FaUser, FaEnvelope, FaLock } from "react-icons/fa";
+import { FaUser, FaEnvelope, FaLock, FaPhone } from "react-icons/fa";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { useTranslation } from "react-i18next";
@@ -13,16 +14,48 @@ import {
   Tabs,
   Tab,
   IconButton,
+  useMediaQuery,
+  Backdrop,
+  Box,
+  Typography,
 } from "@mui/material";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
+import { useDispatch, useSelector } from "react-redux";
+import { loginUser, registerUser, setUser } from "../redux/userSlice";
+import { fetchUsers } from "../redux/usersSlice";
+import { hourglass } from "ldrs";
 
 const UserAuthPage = () => {
   const ref = useRef(null);
   const isInView = useInView(ref, { margin: "-100px" });
-  const [isLogin, setIsLogin] = useState(true);
+  const isNonMobile = useMediaQuery("(min-width: 600px)");
+  const savedToken = localStorage.getItem("token");
   const { t } = useTranslation();
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  // States
+  const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const initialValues = {
+    firstName: "",
+    lastName: "",
+    phone: "",
+    dateOfBirth: "",
+    email: "",
+    role: "Customer",
+    password: "",
+    confirmPassword: "",
+  };
+
+  // Selectors
+  const { userInfo, status, error } = useSelector((state) => state.user);
+  const { users } = useSelector((state) => state.users);
+
+  const phoneRegExp = /^(?=([0-9\-\+])*?[0-9]{8,9}$)[\d\-\+]+$/;
 
   const {
     control,
@@ -31,17 +64,86 @@ const UserAuthPage = () => {
     formState: { errors },
   } = useForm({
     defaultValues: {
-      name: "",
+      first_name: "",
+      last_name: "",
       email: "",
+      phone: "",
+      dateOfBirth: "",
       password: "",
       confirmPassword: "",
     },
   });
 
-  const onSubmit = (data) => {
-    console.log(data);
-    // Handle form submission
+  const onSubmit = async (data) => {
+    if (isLogin) {
+      // Handle login
+      try {
+        const result = await dispatch(
+          loginUser({
+            emailOrPhone: data.email,
+            password: data.password,
+          })
+        ).unwrap();
+
+        if (result.status === "Success") {
+          navigate("/");
+        }
+      } catch (error) {
+        console.error("Login failed:", error);
+      }
+    } else {
+      // Handle registration
+      setIsCreating(true);
+      try {
+        const userData = {
+          firstName: data.first_name,
+          lastName: data.last_name,
+          email: data.email,
+          phone: data.phone,
+          dateOfBirth: data.dateOfBirth,
+          password: data.password,
+          confirmPassword: data.confirmPassword,
+          role: "Customer", // Set default role as Customer
+        };
+
+        const result = await dispatch(registerUser(userData)).unwrap();
+
+        if (result.status === "Success") {
+          // After successful registration, automatically log in
+          await dispatch(
+            loginUser({
+              emailOrPhone: data.email,
+              password: data.password,
+            })
+          ).unwrap();
+
+          navigate("/");
+        }
+      } catch (error) {
+        console.error("Registration failed:", error);
+      } finally {
+        setIsCreating(false);
+      }
+    }
   };
+
+  useEffect(() => {
+    const checkUser = async () => {
+      if (savedToken) {
+        const savedUser = JSON.parse(localStorage.getItem("userInfo"));
+        if (savedUser) {
+          dispatch(setUser(savedUser));
+        }
+      }
+      setIsLoading(false);
+    };
+
+    checkUser();
+  }, [dispatch, savedToken]);
+
+  useEffect(() => {
+    dispatch(fetchUsers(savedToken));
+  }, [dispatch, savedToken]);
 
   const containerVariants = {
     hidden: { opacity: 0, y: 50 },
@@ -83,12 +185,40 @@ const UserAuthPage = () => {
     },
   };
 
+  if (status === "loading") {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <l-hourglass
+          size="40"
+          bg-opacity="0.1"
+          speed="1.75"
+          color="black"
+        ></l-hourglass>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header
         title={isLogin ? t("login") : t("signup")}
         subtitle={isLogin ? t("login_subtitle") : t("signup_subtitle")}
       />
+      <Backdrop
+        sx={{
+          color: "lightgray",
+          zIndex: (theme) => theme.zIndex.modal + 1,
+          backgroundColor: "rgba(0, 0, 0, 0.4)",
+        }}
+        open={isCreating}
+      >
+        <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
+          <l-cardio size="50" stroke="4" speed="1.75" color="lightgray" />
+          <Typography variant="h6" color="lightgray">
+            {t("creatingUser")}
+          </Typography>
+        </Box>
+      </Backdrop>
       <div className="flex-grow container mx-auto mb-0">
         <motion.div
           className="max-w-md mx-auto bg-secondary text-white p-8 rounded-lg my-20 relative overlay-top overlay-bottom"
@@ -143,7 +273,6 @@ const UserAuthPage = () => {
                     />
                   )}
                 />
-
                 <Controller
                   name="last_name"
                   control={control}
@@ -167,6 +296,55 @@ const UserAuthPage = () => {
                             <FaUser />
                           </InputAdornment>
                         ),
+                      }}
+                      sx={textFieldStyles}
+                    />
+                  )}
+                />
+                <Controller
+                  name="phone"
+                  control={control}
+                  rules={{
+                    required: t("phone_required"),
+                    pattern: {
+                      value: /^[0-9]{8}$/,
+                      message: t("phone_invalid"),
+                    },
+                  }}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      fullWidth
+                      label={t("phone")}
+                      error={!!errors.phone}
+                      helperText={errors.phone?.message}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <FaPhone />
+                          </InputAdornment>
+                        ),
+                      }}
+                      sx={textFieldStyles}
+                    />
+                  )}
+                />{" "}
+                <Controller
+                  name="dateOfBirth"
+                  control={control}
+                  rules={{
+                    required: t("dob_required"),
+                  }}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      fullWidth
+                      type="date"
+                      label={t("date_of_birth")}
+                      error={!!errors.dateOfBirth}
+                      helperText={errors.dateOfBirth?.message}
+                      InputLabelProps={{
+                        shrink: true,
                       }}
                       sx={textFieldStyles}
                     />

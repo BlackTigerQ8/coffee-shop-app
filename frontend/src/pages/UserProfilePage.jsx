@@ -24,16 +24,28 @@ import {
   Settings as SettingsIcon,
   AddAPhoto as AddPhotoIcon,
 } from "@mui/icons-material";
+import { useDispatch, useSelector } from "react-redux";
+import { updateUser } from "../redux/usersSlice";
 
 const UserProfilePage = () => {
   const ref = useRef(null);
   const isInView = useInView(ref, { margin: "-100px" });
   const { t } = useTranslation();
+  const dispatch = useDispatch();
   const [activeTab, setActiveTab] = useState(0);
   const [isEditing, setIsEditing] = useState(false);
   const [profileImage, setProfileImage] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef(null);
+  const { userInfo } = useSelector((state) => state.user);
+  const [formData, setFormData] = useState({
+    firstName: userInfo?.firstName || "",
+    lastName: userInfo?.lastName || "",
+    email: userInfo?.email || "",
+    phone: userInfo?.phone || "",
+    address: userInfo?.address || "",
+  });
 
   // Handle file selection
   const handleFileSelect = (file) => {
@@ -112,6 +124,39 @@ const UserProfilePage = () => {
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
+  };
+
+  const handleSaveProfile = async () => {
+    setIsSaving(true);
+    try {
+      const formDataToSend = new FormData();
+      Object.keys(formData).forEach((key) => {
+        if (formData[key]) {
+          formDataToSend.append(key, formData[key]);
+        }
+      });
+
+      // If there's a new profile image, append it
+      if (profileImage && profileImage.startsWith("data:image")) {
+        // Convert base64 to file
+        const response = await fetch(profileImage);
+        const blob = await response.blob();
+        formDataToSend.append("image", blob, "profile-image.jpg");
+      }
+
+      await dispatch(
+        updateUser({
+          userId: userInfo._id,
+          formData: formDataToSend,
+        })
+      ).unwrap();
+
+      setIsEditing(false);
+    } catch (error) {
+      console.error("Failed to update profile:", error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const renderProfileInfo = () => (
@@ -195,35 +240,46 @@ const UserProfilePage = () => {
         <TextField
           fullWidth
           label={t("first_name")}
-          defaultValue="John"
+          value={formData.firstName}
+          onChange={(e) =>
+            setFormData({ ...formData, firstName: e.target.value })
+          }
           disabled={!isEditing}
           sx={textFieldStyles}
         />
         <TextField
           fullWidth
           label={t("last_name")}
-          defaultValue="Doe"
+          value={formData.lastName}
+          onChange={(e) =>
+            setFormData({ ...formData, lastName: e.target.value })
+          }
           disabled={!isEditing}
           sx={textFieldStyles}
         />
         <TextField
           fullWidth
           label={t("email")}
-          defaultValue="john.doe@example.com"
+          value={formData.email}
+          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
           disabled={!isEditing}
           sx={textFieldStyles}
         />
         <TextField
           fullWidth
           label={t("phone")}
-          defaultValue="+1 234 567 8900"
+          value={formData.phone}
+          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
           disabled={!isEditing}
           sx={textFieldStyles}
         />
         <TextField
           fullWidth
           label={t("address")}
-          defaultValue="123 Coffee Street"
+          value={formData.address}
+          onChange={(e) =>
+            setFormData({ ...formData, address: e.target.value })
+          }
           disabled={!isEditing}
           multiline
           rows={3}
@@ -236,7 +292,8 @@ const UserProfilePage = () => {
         <Button
           variant="contained"
           startIcon={isEditing ? <SaveIcon /> : <EditIcon />}
-          onClick={() => setIsEditing(!isEditing)}
+          onClick={isEditing ? handleSaveProfile : () => setIsEditing(true)}
+          disabled={isSaving}
           sx={{
             backgroundColor: "#DA9F5B",
             "&:hover": {

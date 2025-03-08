@@ -37,7 +37,7 @@ function App() {
         />
         <Route path="/order-confirmation" element={<OrderConfirmationPage />} />
         <Route path="/login" element={<UserAuthPage />} />
-        <Route path="/profile" element={<UserProfilePage />} />
+        <Route path="/profile/:id" element={<UserProfilePage />} />
         <Route path="/barista-dashboard" element={<BaristaDashboard />} />
       </Routes>
     </div>

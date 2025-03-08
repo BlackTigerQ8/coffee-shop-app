@@ -14,25 +14,19 @@ const { profileImageUpload } = require("./uploadRoutes");
 
 const router = express.Router();
 
-router
-  .route("/")
-  .get(protect, getAllusers)
-  .post(
-    protect,
-    restrictTo("Admin"),
-    profileImageUpload.single("image"),
-    createUser
-  );
+// Public routes (no authentication needed)
+router.post("/login", loginUser);
+router.post("/contact", contactMessage);
+router.post("/", profileImageUpload.single("image"), createUser); // Registration should be public
+
+// Protected routes (authentication needed)
+router.get("/", protect, getAllusers);
+router.post("/logout", protect, logoutUser);
 
 router
   .route("/:id")
   .get(protect, getUser)
-  .patch(protect, profileImageUpload.single("image"), updateUser)
+  .put(protect, profileImageUpload.single("image"), updateUser)
   .delete(protect, restrictTo("Admin"), deleteUser);
-
-router.post("/login", loginUser);
-router.post("/logout", protect, logoutUser);
-
-router.post("/contact", contactMessage);
 
 module.exports = router;
