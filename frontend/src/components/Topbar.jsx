@@ -37,8 +37,9 @@ const Topbar = ({ cart }) => {
   const links = [
     { id: 1, title: t("home"), url: "/" },
     { id: 2, title: t("menu"), url: "/menu" },
-    { id: 3, title: t("login"), url: "/login" },
-    { id: 4, title: t("profile"), url: "/profile" },
+    { id: 3, title: t("profile"), url: "/profile" },
+    { id: 4, title: t("dashboard"), url: "/barista-dashboard" },
+    { id: 5, title: t("login"), url: "/login" },
   ];
 
   return (

@@ -27,7 +27,7 @@ const BackToTop = () => {
   return (
     <button
       onClick={scrollToTop}
-      className={`fixed bottom-8 right-8 w-12 h-12 bg-primary rounded-full flex items-center justify-center shadow-lg hover:bg-secondary transition-colors duration-300 animate-bounce ${
+      className={`fixed bottom-8 z-10 right-8 w-12 h-12 bg-primary rounded-full flex items-center justify-center shadow-lg hover:bg-secondary transition-colors duration-300 animate-bounce ${
         isVisible ? "opacity-100" : "opacity-0 pointer-events-none"
       }`}
     >

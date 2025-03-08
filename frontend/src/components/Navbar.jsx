@@ -6,6 +6,7 @@ import HomeIcon from "@mui/icons-material/Home";
 import InfoIcon from "@mui/icons-material/Info";
 import ContactMailIcon from "@mui/icons-material/ContactMail";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
+import { DashboardCustomize as DashboardIcon } from "@mui/icons-material";
 import RestaurantMenuIcon from "@mui/icons-material/RestaurantMenu";
 import PersonIcon from "@mui/icons-material/Person";
 import { Link } from "react-router-dom";
@@ -99,6 +100,12 @@ const Navbar = ({ cart }) => {
     },
     {
       id: 4,
+      title: t("dashboard"),
+      url: "/barista-dashboard",
+      icon: <DashboardIcon />,
+    },
+    {
+      id: 5,
       title: t("cart"),
       url: "/cart",
       icon: (

@@ -284,7 +284,7 @@ const UserProfilePage = () => {
           <Divider className="my-4" />
           <div className="text-right mt-4">
             <span className="px-4 py-1 rounded-full bg-primary text-white">
-              {order.status}
+              {t(order.status)}
             </span>
           </div>
         </Paper>

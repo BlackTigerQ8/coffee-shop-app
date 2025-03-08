@@ -12,7 +12,7 @@ import CheckoutPage from "./pages/CheckoutPage";
 import UserAuthPage from "./pages/UserAuthPage";
 import OrderConfirmationPage from "./pages/OrderConfirmationPage";
 import UserProfilePage from "./pages/UserProfilePage";
-
+import BaristaDashboard from "./pages/BaristaDashboard";
 function App() {
   const isNonMobile = useMediaQuery("(min-width: 600px)");
   const [cart, setCart] = useState([]);
@@ -38,6 +38,7 @@ function App() {
         <Route path="/order-confirmation" element={<OrderConfirmationPage />} />
         <Route path="/login" element={<UserAuthPage />} />
         <Route path="/profile" element={<UserProfilePage />} />
+        <Route path="/barista-dashboard" element={<BaristaDashboard />} />
       </Routes>
     </div>
   );
