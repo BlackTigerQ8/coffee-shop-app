@@ -34,6 +34,48 @@ export const fetchUsers = createAsyncThunk("user/fetchUsers", async (token) => {
   }
 });
 
+export const checkPhoneExists = createAsyncThunk(
+  "users/checkPhoneExists",
+  async (phone, { getState }) => {
+    try {
+      const token = getState().user.token;
+      const response = await axios.get(
+        `${API_URL}/users/check-phone/${phone}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      return response.data.exists;
+    } catch (error) {
+      console.error("Error checking phone:", error);
+      return false;
+    }
+  }
+);
+
+export const checkEmailExists = createAsyncThunk(
+  "users/checkEmailExists",
+  async (email, { getState }) => {
+    try {
+      const token = getState().user.token;
+      const response = await axios.get(
+        `${API_URL}/users/check-email/${email}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      return response.data.exists;
+    } catch (error) {
+      console.error("Error checking email:", error);
+      return false;
+    }
+  }
+);
+
 export const fetchUsersByRole = createAsyncThunk(
   "user/fetchUsersByRole",
   async (role, token) => {

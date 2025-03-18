@@ -2,7 +2,16 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import TranslateOutlinedIcon from "@mui/icons-material/TranslateOutlined";
-import { useMediaQuery, Badge } from "@mui/material";
+import {
+  useMediaQuery,
+  Badge,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  Button,
+} from "@mui/material";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import { useSelector, useDispatch } from "react-redux";
 import { logoutUser } from "../redux/userSlice";
@@ -14,9 +23,8 @@ const Topbar = ({ cart }) => {
   const [languageAnchorEl, setLanguageAnchorEl] = useState(null);
   const [isScrolled, setIsScrolled] = useState(false);
   const [openModal, setOpenModal] = useState(false);
-  const { userInfo, userRole } = useSelector((state) => state.user);
-  const savedToken = localStorage.getItem("token");
-  const isLoggedIn = Boolean(savedToken);
+  const { userInfo, userRole, token } = useSelector((state) => state.user);
+  const isLoggedIn = Boolean(token);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -27,12 +35,12 @@ const Topbar = ({ cart }) => {
   }, []);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    // Only fetch users if there's a valid token and user is logged in
-    if (token && userInfo) {
+    // Only fetch users if user is logged in and has a valid token
+    if (isLoggedIn && userInfo && userRole === "Admin") {
+      const token = localStorage.getItem("token");
       dispatch(fetchUsers(token));
     }
-  }, [dispatch, userInfo]);
+  }, [dispatch, userInfo, isLoggedIn, userRole]);
 
   const handleLogout = () => {
     setOpenModal(true);
@@ -71,26 +79,55 @@ const Topbar = ({ cart }) => {
     ];
 
     if (isLoggedIn) {
-      if (userRole === "Barista") {
-        return [
-          ...baseLinks,
-          { id: 4, title: t("dashboard"), url: "/barista-dashboard" },
-        ];
-      }
+      const roleSpecificLinks =
+        userRole === "Barista"
+          ? [
+              {
+                id: 3,
+                title: t("dashboard"),
+                url: "/barista-dashboard",
+              },
+            ]
+          : [
+              {
+                id: 4,
+                title: t("profile"),
+                url: `/profile/${userInfo._id}`,
+              },
+              {
+                id: 5,
+                title: t("cart"),
+                url: "/cart",
+                icon: (
+                  <Badge
+                    badgeContent={getTotalItems()}
+                    color="primary"
+                    sx={{
+                      "& .MuiBadge-badge": {
+                        backgroundColor: "#DA9F5B",
+                        color: "white",
+                      },
+                    }}
+                  >
+                    <ShoppingCartIcon />
+                  </Badge>
+                ),
+              },
+            ];
+
       return [
         ...baseLinks,
-        { id: 3, title: t("profile"), url: `/profile/${userInfo._id}` },
+        ...roleSpecificLinks,
+        {
+          id: 6,
+          title: t("logout"),
+          url: "/",
+          onClick: handleLogout,
+        },
       ];
     }
 
-    return [
-      ...baseLinks,
-      {
-        id: 5,
-        title: isLoggedIn ? t("login") : t("logout"),
-        url: isLoggedIn ? "/login" : "/",
-      },
-    ];
+    return [...baseLinks, { id: 6, title: t("login"), url: "/login" }];
   };
 
   const links = getNavigationLinks();
@@ -146,6 +183,7 @@ const Topbar = ({ cart }) => {
                   <Link
                     key={item.id}
                     to={item.url}
+                    onClick={item.onClick}
                     className="text-[#FFF8F0] hover:text-primary transition-colors capitalize nav-link"
                   >
                     {item.title}
@@ -173,6 +211,31 @@ const Topbar = ({ cart }) => {
           )}
         </div>
       </div>
+      <Dialog
+        open={openModal}
+        onClose={() => handleModalClose(false)}
+        aria-labelledby="logout-dialog-title"
+        aria-describedby="logout-dialog-description"
+      >
+        <DialogTitle id="logout-dialog-title">{t("confirmLogout")}</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="logout-dialog-description">
+            {t("logoutConfirmation")}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => handleModalClose(false)} color="primary">
+            {t("cancel")}
+          </Button>
+          <Button
+            onClick={() => handleModalClose(true)}
+            color="primary"
+            autoFocus
+          >
+            {t("logout")}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };

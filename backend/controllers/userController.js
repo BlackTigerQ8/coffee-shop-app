@@ -331,6 +331,30 @@ const contactMessage = async (req, res) => {
   }
 };
 
+// @desc    Check if email exists
+// @route   GET /api/users/check-email/:email
+// @access  Public
+const checkEmailExists = async (req, res) => {
+  try {
+    const user = await User.findOne({ email: req.params.email });
+    res.json({ exists: !!user });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// @desc    Check if phone exists
+// @route   GET /api/users/check-phone/:phone
+// @access  Public
+const checkPhoneExists = async (req, res) => {
+  try {
+    const user = await User.findOne({ phone: req.params.phone });
+    res.json({ exists: !!user });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   getAllusers,
   getUser,
@@ -340,4 +364,6 @@ module.exports = {
   loginUser,
   logoutUser,
   contactMessage,
+  checkEmailExists,
+  checkPhoneExists,
 };

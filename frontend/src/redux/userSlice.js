@@ -61,7 +61,6 @@ export const loginUser = createAsyncThunk(
       return response.data;
     } catch (error) {
       if (error.response.status === 401) {
-        // Clear local storage if unauthorized
         localStorage.clear();
       }
       throw new Error(error.response.data.message || error.message);
@@ -128,18 +127,16 @@ const userSlice = createSlice({
       })
       .addCase(loginUser.fulfilled, (state, action) => {
         state.status = "succeeded";
-        const { user, token } = action.payload.data;
+        const { user } = action.payload.data;
         state.userInfo = user;
-        state.token = token;
         state.token = action.payload.token;
         state.userRole = user.role;
-        localStorage.setItem("token", action.payload.token);
         dispatchToast(i18next.t("loginUserFulfilled"), "success");
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.payload || action.error.message;
-        dispatchToast(i18next.t("loggingIn"), "success");
+        dispatchToast(i18next.t(state.error), "error");
       })
 
       ///////////////////
@@ -153,7 +150,7 @@ const userSlice = createSlice({
       .addCase(registerUser.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.error.message;
-        dispatchToast(i18next.t("registerUserRejected"), "error");
+        dispatchToast(i18next.t(state.error), "error");
       })
       .addCase(profileImage.fulfilled, (state, action) => {
         state.status = "succeeded";

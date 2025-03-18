@@ -13,7 +13,6 @@ import {
   Tab,
   Avatar,
   Divider,
-  IconButton,
   Box,
 } from "@mui/material";
 import {
@@ -21,7 +20,6 @@ import {
   Save as SaveIcon,
   Person as PersonIcon,
   History as HistoryIcon,
-  Settings as SettingsIcon,
   AddAPhoto as AddPhotoIcon,
 } from "@mui/icons-material";
 import { useDispatch, useSelector } from "react-redux";

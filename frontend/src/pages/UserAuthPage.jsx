@@ -2,8 +2,13 @@ import { motion } from "framer-motion";
 import { useInView } from "framer-motion";
 import { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useForm, Controller } from "react-hook-form";
-import { FaUser, FaEnvelope, FaLock, FaPhone } from "react-icons/fa";
+import {
+  FaUser,
+  FaEnvelope,
+  FaLock,
+  FaPhone,
+  FaCalendar,
+} from "react-icons/fa"; // Add FaCalendar import
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { useTranslation } from "react-i18next";
@@ -14,136 +19,169 @@ import {
   Tabs,
   Tab,
   IconButton,
-  useMediaQuery,
-  Backdrop,
-  Box,
-  Typography,
 } from "@mui/material";
+import Backdrop from "../components/Backdrop";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import dayjs from "dayjs";
+import { Formik, Form, Field } from "formik";
+import * as yup from "yup";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { useDispatch, useSelector } from "react-redux";
 import { loginUser, registerUser, setUser } from "../redux/userSlice";
-import { fetchUsers } from "../redux/usersSlice";
-import { hourglass } from "ldrs";
+import { checkPhoneExists, checkEmailExists } from "../redux/usersSlice";
 
 const UserAuthPage = () => {
   const ref = useRef(null);
   const isInView = useInView(ref, { margin: "-100px" });
-  const isNonMobile = useMediaQuery("(min-width: 600px)");
-  const savedToken = localStorage.getItem("token");
+  const { token } = useSelector((state) => state.user);
   const { t } = useTranslation();
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  // const phoneRegExp = /^(?=([0-9\-\+])*?[0-9]{8,9}$)[\d\-\+]+$/;
 
   // States
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isCreating, setIsCreating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Selectors
+  const { status } = useSelector((state) => state.user);
+
+  const validationSchema = yup.object().shape({
+    firstName: yup.string().when("isLogin", {
+      is: false,
+      then: () =>
+        yup
+          .string()
+          .required(t("first_name_required"))
+          .min(2, t("first_name_min_length")),
+    }),
+    lastName: yup.string().when("isLogin", {
+      is: false,
+      then: () =>
+        yup
+          .string()
+          .required(t("last_name_required"))
+          .min(2, t("last_name_min_length")),
+    }),
+    email: yup.string().when("isLogin", {
+      is: true,
+      then: () => yup.string().required(t("required")), // Simple validation for login
+      otherwise: () =>
+        yup
+          .string()
+          .email(t("email_invalid"))
+          .required(t("required"))
+          .test("unique", t("emailAlreadyExists"), async function (value) {
+            if (!value) return true;
+            const result = await dispatch(checkEmailExists(value));
+            return !result.payload;
+          }),
+    }),
+    phone: yup.string().when("isLogin", {
+      is: true,
+      then: () => yup.string(), // No validation during login
+      otherwise: () =>
+        yup
+          .string()
+          .required(t("phone_required"))
+          .test("unique", t("phoneAlreadyExists"), async function (value) {
+            if (!value) return true;
+            const result = await dispatch(checkPhoneExists(value));
+            return !result.payload;
+          }),
+    }),
+    dateOfBirth: yup.string().when("isLogin", {
+      is: false,
+      then: () => yup.string().required(t("dob_required")),
+    }),
+    password: yup
+      .string()
+      .required(t("password_required"))
+      .when("isLogin", {
+        is: false,
+        then: () => yup.string().min(6, t("password_min_length")),
+      }),
+    confirmPassword: yup.string().when("isLogin", {
+      is: false,
+      then: () =>
+        yup
+          .string()
+          .required(t("confirm_password_required"))
+          .oneOf([yup.ref("password")], t("passwords_do_not_match")),
+    }),
+  });
+
   const initialValues = {
     firstName: "",
     lastName: "",
+    email: "",
     phone: "",
     dateOfBirth: "",
-    email: "",
-    role: "Customer",
     password: "",
     confirmPassword: "",
+    isLogin,
   };
 
-  // Selectors
-  const { userInfo, status, error } = useSelector((state) => state.user);
-  const { users } = useSelector((state) => state.users);
-
-  const phoneRegExp = /^(?=([0-9\-\+])*?[0-9]{8,9}$)[\d\-\+]+$/;
-
-  const {
-    control,
-    handleSubmit,
-    watch,
-    formState: { errors },
-  } = useForm({
-    defaultValues: {
-      first_name: "",
-      last_name: "",
-      email: "",
-      phone: "",
-      dateOfBirth: "",
-      password: "",
-      confirmPassword: "",
-    },
-  });
-
-  const onSubmit = async (data) => {
-    if (isLogin) {
-      // Handle login
-      try {
+  const handleSubmit = async (values, { setSubmitting }) => {
+    try {
+      if (isLogin) {
         const result = await dispatch(
           loginUser({
-            emailOrPhone: data.email,
-            password: data.password,
+            emailOrPhone: values.email,
+            password: values.password,
           })
         ).unwrap();
 
         if (result.status === "Success") {
           navigate("/");
         }
-      } catch (error) {
-        console.error("Login failed:", error);
-      }
-    } else {
-      // Handle registration
-      setIsCreating(true);
-      try {
+      } else {
         const userData = {
-          firstName: data.first_name,
-          lastName: data.last_name,
-          email: data.email,
-          phone: data.phone,
-          dateOfBirth: data.dateOfBirth,
-          password: data.password,
-          confirmPassword: data.confirmPassword,
-          role: "Customer", // Set default role as Customer
+          firstName: values.firstName,
+          lastName: values.lastName,
+          email: values.email,
+          phone: values.phone,
+          dateOfBirth: values.dateOfBirth,
+          password: values.password,
+          confirmPassword: values.confirmPassword,
+          role: "Customer",
         };
 
         const result = await dispatch(registerUser(userData)).unwrap();
 
         if (result.status === "Success") {
-          // After successful registration, automatically log in
           await dispatch(
             loginUser({
-              emailOrPhone: data.email,
-              password: data.password,
+              emailOrPhone: values.email,
+              password: values.password,
             })
           ).unwrap();
-
           navigate("/");
         }
-      } catch (error) {
-        console.error("Registration failed:", error);
-      } finally {
-        setIsCreating(false);
       }
+    } catch (error) {
+      console.error(isLogin ? "Login failed:" : "Registration failed:", error);
+    } finally {
+      setSubmitting(false);
     }
   };
 
   useEffect(() => {
     const checkUser = async () => {
-      if (savedToken) {
+      if (token) {
         const savedUser = JSON.parse(localStorage.getItem("userInfo"));
         if (savedUser) {
           dispatch(setUser(savedUser));
+          navigate("/"); // Redirect to home if already logged in
         }
       }
       setIsLoading(false);
     };
 
     checkUser();
-  }, [dispatch, savedToken]);
-
-  useEffect(() => {
-    dispatch(fetchUsers(savedToken));
-  }, [dispatch, savedToken]);
+  }, [dispatch, token, navigate]);
 
   const containerVariants = {
     hidden: { opacity: 0, y: 50 },
@@ -185,40 +223,14 @@ const UserAuthPage = () => {
     },
   };
 
-  if (status === "loading") {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <l-hourglass
-          size="40"
-          bg-opacity="0.1"
-          speed="1.75"
-          color="black"
-        ></l-hourglass>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen flex flex-col">
       <Header
         title={isLogin ? t("login") : t("signup")}
         subtitle={isLogin ? t("login_subtitle") : t("signup_subtitle")}
       />
-      <Backdrop
-        sx={{
-          color: "lightgray",
-          zIndex: (theme) => theme.zIndex.modal + 1,
-          backgroundColor: "rgba(0, 0, 0, 0.4)",
-        }}
-        open={isCreating}
-      >
-        <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
-          <l-cardio size="50" stroke="4" speed="1.75" color="lightgray" />
-          <Typography variant="h6" color="lightgray">
-            {t("creatingUser")}
-          </Typography>
-        </Box>
-      </Backdrop>
+
+      <Backdrop isOpen={isLoading} />
       <div className="flex-grow container mx-auto mb-0">
         <motion.div
           className="max-w-md mx-auto bg-secondary text-white p-8 rounded-lg my-20 relative overlay-top overlay-bottom"
@@ -242,265 +254,240 @@ const UserAuthPage = () => {
             <Tab label={t("signup")} />
           </Tabs>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            {!isLogin && (
-              <div className="grid grid-cols-2 gap-4">
-                <Controller
-                  name="first_name"
-                  control={control}
-                  rules={{
-                    required: t("first_name_required"),
-                    minLength: {
-                      value: 2,
-                      message: t("first_name_min_length"),
-                    },
-                  }}
-                  render={({ field }) => (
-                    <TextField
-                      {...field}
-                      fullWidth
-                      label={t("first_name")}
-                      error={!!errors.first_name}
-                      helperText={errors.first_name?.message}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <FaUser />
-                          </InputAdornment>
-                        ),
-                      }}
-                      sx={textFieldStyles}
-                    />
-                  )}
-                />
-                <Controller
-                  name="last_name"
-                  control={control}
-                  rules={{
-                    required: t("last_name_required"),
-                    minLength: {
-                      value: 2,
-                      message: t("last_name_min_length"),
-                    },
-                  }}
-                  render={({ field }) => (
-                    <TextField
-                      {...field}
-                      fullWidth
-                      label={t("last_name")}
-                      error={!!errors.last_name}
-                      helperText={errors.last_name?.message}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <FaUser />
-                          </InputAdornment>
-                        ),
-                      }}
-                      sx={textFieldStyles}
-                    />
-                  )}
-                />
-                <Controller
-                  name="phone"
-                  control={control}
-                  rules={{
-                    required: t("phone_required"),
-                    pattern: {
-                      value: /^[0-9]{8}$/,
-                      message: t("phone_invalid"),
-                    },
-                  }}
-                  render={({ field }) => (
-                    <TextField
-                      {...field}
-                      fullWidth
-                      label={t("phone")}
-                      error={!!errors.phone}
-                      helperText={errors.phone?.message}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <FaPhone />
-                          </InputAdornment>
-                        ),
-                      }}
-                      sx={textFieldStyles}
-                    />
-                  )}
-                />{" "}
-                <Controller
-                  name="dateOfBirth"
-                  control={control}
-                  rules={{
-                    required: t("dob_required"),
-                  }}
-                  render={({ field }) => (
-                    <TextField
-                      {...field}
-                      fullWidth
-                      type="date"
-                      label={t("date_of_birth")}
-                      error={!!errors.dateOfBirth}
-                      helperText={errors.dateOfBirth?.message}
-                      InputLabelProps={{
-                        shrink: true,
-                      }}
-                      sx={textFieldStyles}
-                    />
-                  )}
-                />
-              </div>
-            )}
+          <Formik
+            initialValues={initialValues}
+            validationSchema={validationSchema}
+            onSubmit={handleSubmit}
+            enableReinitialize
+          >
+            {({ errors, touched, isSubmitting, setFieldValue }) => (
+              <Form className="space-y-6">
+                {!isLogin && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <Field name="firstName">
+                      {({ field }) => (
+                        <TextField
+                          {...field}
+                          fullWidth
+                          label={t("first_name")}
+                          error={touched.firstName && !!errors.firstName}
+                          helperText={touched.firstName && errors.firstName}
+                          InputProps={{
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <FaUser />
+                              </InputAdornment>
+                            ),
+                          }}
+                          sx={textFieldStyles}
+                        />
+                      )}
+                    </Field>
 
-            <Controller
-              name="email"
-              control={control}
-              rules={{
-                required: t("email_required"),
-                pattern: {
-                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                  message: t("email_invalid"),
-                },
-              }}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  fullWidth
-                  label={t("email_placeholder")}
-                  error={!!errors.email}
-                  helperText={errors.email?.message}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <FaEnvelope />
-                      </InputAdornment>
-                    ),
-                  }}
-                  sx={textFieldStyles}
-                />
-              )}
-            />
+                    <Field name="lastName">
+                      {({ field }) => (
+                        <TextField
+                          {...field}
+                          fullWidth
+                          label={t("last_name")}
+                          error={touched.lastName && !!errors.lastName}
+                          helperText={touched.lastName && errors.lastName}
+                          InputProps={{
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <FaUser />
+                              </InputAdornment>
+                            ),
+                          }}
+                          sx={textFieldStyles}
+                        />
+                      )}
+                    </Field>
 
-            <Controller
-              name="password"
-              control={control}
-              rules={{
-                required: t("password_required"),
-                minLength: {
-                  value: 6,
-                  message: t("password_min_length"),
-                },
-              }}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  fullWidth
-                  type={showPassword ? "text" : "password"}
-                  label={t("password_placeholder")}
-                  error={!!errors.password}
-                  helperText={errors.password?.message}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <FaLock />
-                      </InputAdornment>
-                    ),
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton
-                          onClick={() => setShowPassword(!showPassword)}
-                          edge="end"
-                          sx={{ color: "#DA9F5B" }}
-                        >
-                          {showPassword ? <VisibilityOff /> : <Visibility />}
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  }}
-                  sx={textFieldStyles}
-                />
-              )}
-            />
+                    <Field name="phone">
+                      {({ field }) => (
+                        <TextField
+                          {...field}
+                          fullWidth
+                          label={t("phone")}
+                          error={touched.phone && !!errors.phone}
+                          helperText={touched.phone && errors.phone}
+                          InputProps={{
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <FaPhone />
+                              </InputAdornment>
+                            ),
+                          }}
+                          sx={textFieldStyles}
+                        />
+                      )}
+                    </Field>
 
-            {!isLogin && (
-              <Controller
-                name="confirmPassword"
-                control={control}
-                rules={{
-                  required: t("confirm_password_required"),
-                  validate: (value) =>
-                    value === watch("password") || t("passwords_do_not_match"),
-                }}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    fullWidth
-                    type={showConfirmPassword ? "text" : "password"}
-                    label={t("confirm_password_placeholder")}
-                    error={!!errors.confirmPassword}
-                    helperText={errors.confirmPassword?.message}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <FaLock />
-                        </InputAdornment>
-                      ),
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          <IconButton
-                            onClick={() =>
-                              setShowConfirmPassword(!showConfirmPassword)
-                            }
-                            edge="end"
-                            sx={{ color: "#DA9F5B" }}
-                          >
-                            {showConfirmPassword ? (
-                              <VisibilityOff />
-                            ) : (
-                              <Visibility />
-                            )}
-                          </IconButton>
-                        </InputAdornment>
-                      ),
-                    }}
-                    sx={textFieldStyles}
-                  />
+                    <Field name="dateOfBirth">
+                      {({ field }) => (
+                        <DatePicker
+                          label={t("date_of_birth")}
+                          value={field.value ? dayjs(field.value) : null}
+                          onChange={(newValue) => {
+                            setFieldValue(
+                              "dateOfBirth",
+                              newValue ? newValue.format("YYYY-MM-DD") : ""
+                            );
+                          }}
+                          maxDate={dayjs()} // Prevents future dates
+                          slotProps={{
+                            textField: {
+                              fullWidth: true,
+                              error:
+                                touched.dateOfBirth && !!errors.dateOfBirth,
+                              helperText:
+                                touched.dateOfBirth && errors.dateOfBirth,
+                              InputProps: {
+                                startAdornment: (
+                                  <InputAdornment position="start">
+                                    <FaCalendar />
+                                  </InputAdornment>
+                                ),
+                              },
+                              sx: {
+                                ...textFieldStyles,
+                                "& .MuiPickersDay-root.Mui-selected": {
+                                  backgroundColor: "#DA9F5B",
+                                  "&:hover": {
+                                    backgroundColor: "#c48f51",
+                                  },
+                                },
+                                "& .MuiPickersDay-root:hover": {
+                                  backgroundColor: "rgba(218, 159, 91, 0.1)",
+                                },
+                              },
+                            },
+                          }}
+                        />
+                      )}
+                    </Field>
+                  </div>
                 )}
-              />
-            )}
 
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              sx={{
-                backgroundColor: "#DA9F5B",
-                py: 1.5,
-                "&:hover": {
-                  backgroundColor: "#c48f51",
-                },
-              }}
-            >
-              {isLogin ? t("login") : t("signup")}
-            </Button>
+                <Field name="email">
+                  {({ field }) => (
+                    <TextField
+                      {...field}
+                      fullWidth
+                      label={t("email_placeholder")}
+                      error={touched.email && !!errors.email}
+                      helperText={touched.email && errors.email}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <FaEnvelope />
+                          </InputAdornment>
+                        ),
+                      }}
+                      sx={textFieldStyles}
+                    />
+                  )}
+                </Field>
 
-            {isLogin && (
-              <div className="text-center">
+                <Field name="password">
+                  {({ field }) => (
+                    <TextField
+                      {...field}
+                      fullWidth
+                      type={showPassword ? "text" : "password"}
+                      label={t("password_placeholder")}
+                      error={touched.password && !!errors.password}
+                      helperText={touched.password && errors.password}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <FaLock />
+                          </InputAdornment>
+                        ),
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton
+                              onClick={() => setShowPassword(!showPassword)}
+                              edge="end"
+                              sx={{ color: "#DA9F5B" }}
+                            >
+                              {showPassword ? (
+                                <VisibilityOff />
+                              ) : (
+                                <Visibility />
+                              )}
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                      }}
+                      sx={textFieldStyles}
+                    />
+                  )}
+                </Field>
+
+                {!isLogin && (
+                  <Field name="confirmPassword">
+                    {({ field }) => (
+                      <TextField
+                        {...field}
+                        fullWidth
+                        type={showConfirmPassword ? "text" : "password"}
+                        label={t("confirm_password_placeholder")}
+                        error={
+                          touched.confirmPassword && !!errors.confirmPassword
+                        }
+                        helperText={
+                          touched.confirmPassword && errors.confirmPassword
+                        }
+                        InputProps={{
+                          startAdornment: (
+                            <InputAdornment position="start">
+                              <FaLock />
+                            </InputAdornment>
+                          ),
+                          endAdornment: (
+                            <InputAdornment position="end">
+                              <IconButton
+                                onClick={() =>
+                                  setShowConfirmPassword(!showConfirmPassword)
+                                }
+                                edge="end"
+                                sx={{ color: "#DA9F5B" }}
+                              >
+                                {showConfirmPassword ? (
+                                  <VisibilityOff />
+                                ) : (
+                                  <Visibility />
+                                )}
+                              </IconButton>
+                            </InputAdornment>
+                          ),
+                        }}
+                        sx={textFieldStyles}
+                      />
+                    )}
+                  </Field>
+                )}
+
                 <Button
+                  type="submit"
+                  fullWidth
+                  variant="contained"
+                  disabled={isSubmitting}
                   sx={{
-                    color: "#DA9F5B",
+                    backgroundColor: "#DA9F5B",
+                    py: 1.5,
                     "&:hover": {
-                      backgroundColor: "rgba(218, 159, 91, 0.04)",
+                      backgroundColor: "#c48f51",
                     },
                   }}
-                  onClick={(e) => e.preventDefault()}
                 >
-                  {t("forgot_password")}
+                  {isLogin ? t("login") : t("signup")}
                 </Button>
-              </div>
+              </Form>
             )}
-          </form>
+          </Formik>
 
           <div className="text-center mt-6">
             <span className="mr-2">
