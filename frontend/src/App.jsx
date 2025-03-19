@@ -18,16 +18,34 @@ import BaristaDashboard from "./pages/BaristaDashboard";
 import { hourglass } from "ldrs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-
+import CreateMenu from "./pages/CreateMenu";
+import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import i18next from "i18next";
 function App() {
-  const isNonMobile = useMediaQuery("(min-width: 600px)");
+  const isDesktop = useMediaQuery("(min-width: 1024px)");
   const [cart, setCart] = useState([]);
   hourglass.register();
+
+  const ProtectedRoute = ({ children, roles }) => {
+    const { userInfo } = useSelector((state) => state.user);
+    const navigate = useNavigate();
+
+    useEffect(() => {
+      if (!userInfo || !roles.includes(userInfo.role)) {
+        toast.error(i18next.t("unauthorized"));
+      }
+    }, [userInfo, roles, navigate]);
+
+    return userInfo && roles.includes(userInfo.role) ? children : null;
+  };
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <div className="font-montserrat text-coffee bg-light">
-        {!isNonMobile && <Navbar cart={cart} />}
+        {!isDesktop && <Navbar cart={cart} />}
+
         <Topbar cart={cart} />
         <Routes>
           <Route path="/" element={<LandingPage />} />
@@ -50,6 +68,15 @@ function App() {
           <Route path="/login" element={<UserAuthPage />} />
           <Route path="/profile/:id" element={<UserProfilePage />} />
           <Route path="/barista-dashboard" element={<BaristaDashboard />} />
+
+          <Route
+            path="/menu/create"
+            element={
+              <ProtectedRoute roles={["Admin", "Barista"]}>
+                <CreateMenu />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
         <ToastContainer />
       </div>

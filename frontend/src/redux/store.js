@@ -3,7 +3,7 @@ import userReducer from "./userSlice";
 import { persistStore, persistReducer } from "redux-persist";
 import storage from "redux-persist/lib/storage"; // defaults to localStorage for web
 import usersReducer from "./usersSlice";
-
+import menuReducer from "./menuSlice";
 const persistConfig = {
   key: "root",
   storage,
@@ -12,6 +12,7 @@ const persistConfig = {
 const rootReducer = combineReducers({
   user: userReducer,
   users: usersReducer,
+  menu: menuReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

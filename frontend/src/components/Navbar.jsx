@@ -3,18 +3,9 @@ import { Twirl as Hamburger } from "hamburger-react";
 import { useTranslation } from "react-i18next";
 import TranslateOutlinedIcon from "@mui/icons-material/TranslateOutlined";
 import HomeIcon from "@mui/icons-material/Home";
-import {
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  Button,
-  Badge,
-} from "@mui/material";
+import { Badge } from "@mui/material";
+import Modal from "./Modal";
 import LogoutIcon from "@mui/icons-material/Logout";
-import InfoIcon from "@mui/icons-material/Info";
-import ContactMailIcon from "@mui/icons-material/ContactMail";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import { DashboardCustomize as DashboardIcon } from "@mui/icons-material";
 import RestaurantMenuIcon from "@mui/icons-material/RestaurantMenu";
@@ -121,107 +112,82 @@ const Navbar = ({ cart }) => {
   };
 
   const getNavigationLinks = () => {
+    // Base links for all users (logged in or not)
     const baseLinks = [
       { id: 1, title: t("home"), url: "/", icon: <HomeIcon /> },
       { id: 2, title: t("menu"), url: "/menu", icon: <RestaurantMenuIcon /> },
     ];
 
-    if (isLoggedIn) {
-      const roleSpecificLinks =
-        userRole === "Barista"
-          ? [
-              {
-                id: 3,
-                title: t("dashboard"),
-                url: "/barista-dashboard",
-                icon: <DashboardIcon />,
-              },
-            ]
-          : [
-              {
-                id: 4,
-                title: t("profile"),
-                url: `/profile/${userInfo._id}`,
-                icon: <PersonIcon />,
-              },
-              {
-                id: 5,
-                title: t("cart"),
-                url: "/cart",
-                icon: (
-                  <Badge
-                    badgeContent={getTotalItems()}
-                    color="primary"
-                    sx={{
-                      "& .MuiBadge-badge": {
-                        backgroundColor: "#DA9F5B",
-                        color: "white",
-                      },
-                    }}
-                  >
-                    <ShoppingCartIcon />
-                  </Badge>
-                ),
-              },
-            ];
-
+    // If user is not logged in, add login link
+    if (!isLoggedIn) {
       return [
         ...baseLinks,
-        ...roleSpecificLinks,
-        {
-          id: 6,
-          title: t("logout"),
-          url: "/",
-          onClick: handleLogout,
-          icon: <LogoutIcon />,
-        },
+        { id: 3, title: t("login"), url: "/login", icon: <PersonIcon /> },
       ];
     }
 
-    return [
+    // For logged-in users, add profile
+    let links = [
       ...baseLinks,
-      { id: 6, title: t("login"), url: "/login", icon: <PersonIcon /> },
+      {
+        id: 3,
+        title: t("profile"),
+        url: `/profile/${userInfo?._id}`,
+        icon: <PersonIcon />,
+      },
     ];
+
+    // Add dashboard and create_menu for Admin and Barista
+    if (userRole === "Admin" || userRole === "Barista") {
+      links.push(
+        {
+          id: 4,
+          title: t("dashboard"),
+          url: "/barista-dashboard",
+          icon: <DashboardIcon />,
+        },
+        {
+          id: 5,
+          title: t("create_menu"),
+          url: "/menu/create",
+          icon: <RestaurantMenuIcon />,
+        }
+      );
+    } else {
+      // Add cart for regular users (not Admin/Barista)
+      links.push({
+        id: 4,
+        title: t("cart"),
+        url: "/cart",
+        icon: (
+          <Badge
+            badgeContent={getTotalItems()}
+            color="primary"
+            sx={{
+              "& .MuiBadge-badge": {
+                backgroundColor: "#DA9F5B",
+                color: "white",
+              },
+            }}
+          >
+            <ShoppingCartIcon />
+          </Badge>
+        ),
+      });
+    }
+
+    // Add logout for all logged-in users
+    links.push({
+      id: 6,
+      title: t("logout"),
+      url: "/",
+      onClick: handleLogout,
+      icon: <LogoutIcon />,
+    });
+
+    return links;
   };
-
   const links = getNavigationLinks();
-
-  // const test = [
-  //   { id: 1, title: t("home"), url: "/", icon: <HomeIcon /> },
-  //   { id: 2, title: t("menu"), url: "/menu", icon: <RestaurantMenuIcon /> },
-  //   {
-  //     id: 3,
-  //     title: t("user_profile"),
-  //     url: "/profile",
-  //     icon: <PersonIcon />,
-  //   },
-  //   {
-  //     id: 4,
-  //     title: t("dashboard"),
-  //     url: "/barista-dashboard",
-  //     icon: <DashboardIcon />,
-  //   },
-  //   {
-  //     id: 5,
-  //     title: t("cart"),
-  //     url: "/cart",
-  //     icon: (
-  //       <Badge
-  //         badgeContent={getTotalItems()}
-  //         color="primary"
-  //         sx={{
-  //           "& .MuiBadge-badge": {
-  //             backgroundColor: "#DA9F5B",
-  //             color: "white",
-  //           },
-  //         }}
-  //       >
-  //         <ShoppingCartIcon />
-  //       </Badge>
-  //     ),
-  //   },
-  //   { id: 5, title: t("login"), url: "/login", icon: <PersonIcon /> },
-  // ];
 
   return (
     <>
@@ -335,31 +301,13 @@ const Navbar = ({ cart }) => {
           </>
         )}
       </AnimatePresence>
-      <Dialog
+      <Modal
         open={openModal}
         onClose={() => handleModalClose(false)}
-        aria-labelledby="logout-dialog-title"
-        aria-describedby="logout-dialog-description"
-      >
-        <DialogTitle id="logout-dialog-title">{t("confirmLogout")}</DialogTitle>
-        <DialogContent>
-          <DialogContentText id="logout-dialog-description">
-            {t("logoutConfirmation")}
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => handleModalClose(false)} color="primary">
-            {t("cancel")}
-          </Button>
-          <Button
-            onClick={() => handleModalClose(true)}
-            color="primary"
-            autoFocus
-          >
-            {t("logout")}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        onConfirm={() => handleModalClose(true)}
+        title={t("confirmLogout")}
+        message={t("logoutConfirmation")}
+      />
     </>
   );
 };

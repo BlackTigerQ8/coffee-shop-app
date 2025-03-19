@@ -22,16 +22,11 @@ import { useNavigate } from "react-router-dom";
 import Footer from "../components/Footer";
 import BackToTop from "../components/BackToTop";
 
-const CartPage = ({ cart, setCart }) => {
+const CartPage = ({ cart = [], setCart = () => {} }) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { margin: "-100px" });
   const navigate = useNavigate();
   const { t } = useTranslation();
-
-  CartPage.defaultProps = {
-    cart: [],
-    setCart: () => {},
-  };
 
   const containerVariants = {
     hidden: {

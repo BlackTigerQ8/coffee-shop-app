@@ -40,7 +40,7 @@ export const registerUser = createAsyncThunk(
 
       const response = await axios.post(`${API_URL}/users`, userFormData, {
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: token ? `Bearer ${token}` : "", // Add proper formatting
           "Content-Type": "multipart/form-data",
         },
       });
@@ -131,6 +131,7 @@ const userSlice = createSlice({
         state.userInfo = user;
         state.token = action.payload.token;
         state.userRole = user.role;
+        localStorage.setItem("token", action.payload.token);
         dispatchToast(i18next.t("loginUserFulfilled"), "success");
       })
       .addCase(loginUser.rejected, (state, action) => {

@@ -29,10 +29,24 @@ const images = multer.diskStorage({
   },
 });
 
+const menuImages = multer.diskStorage({
+  destination: "./uploads/menu-images",
+  filename(req, file, cb) {
+    cb(null, getUploadFileName(file));
+  },
+});
+
 ///// INSTANCES /////
 // Image upload instance
 const profileImageUpload = multer({
   storage: images,
+  fileFilter: function (req, file, cb) {
+    checkImageFileType(file, cb, "images");
+  },
+});
+
+const menuImageUpload = multer({
+  storage: menuImages,
   fileFilter: function (req, file, cb) {
     checkImageFileType(file, cb, "images");
   },
@@ -127,4 +141,5 @@ router.post(
 module.exports = {
   router,
   profileImageUpload,
+  menuImageUpload,
 };

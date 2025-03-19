@@ -2,27 +2,21 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import TranslateOutlinedIcon from "@mui/icons-material/TranslateOutlined";
-import {
-  useMediaQuery,
-  Badge,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  Button,
-} from "@mui/material";
+import { useMediaQuery, Badge } from "@mui/material";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
+import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import { useSelector, useDispatch } from "react-redux";
 import { logoutUser } from "../redux/userSlice";
 import { fetchUsers } from "../redux/usersSlice";
-
+import Modal from "./Modal";
 const Topbar = ({ cart }) => {
-  const isNonMobile = useMediaQuery("(min-width: 600px)");
+  const isDesktop = useMediaQuery("(min-width: 1024px)");
   const { t, i18n } = useTranslation();
   const [languageAnchorEl, setLanguageAnchorEl] = useState(null);
+  const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [openModal, setOpenModal] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const { userInfo, userRole, token } = useSelector((state) => state.user);
   const isLoggedIn = Boolean(token);
   const dispatch = useDispatch();
@@ -33,6 +27,10 @@ const Topbar = ({ cart }) => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  const handleProfileMenu = () => {
+    setIsProfileMenuOpen(!isProfileMenuOpen);
+  };
 
   useEffect(() => {
     // Only fetch users if user is logged in and has a valid token
@@ -48,24 +46,24 @@ const Topbar = ({ cart }) => {
 
   const handleModalClose = (confirm) => {
     if (confirm) {
-      dispatch(logoutUser());
       localStorage.clear();
+      dispatch(logoutUser());
       navigate("/");
     }
     setOpenModal(false);
   };
 
-  const handleLanguageMenu = (event) => {
-    setLanguageAnchorEl(event.currentTarget);
+  const handleLanguageMenu = () => {
+    setIsLanguageMenuOpen(!isLanguageMenuOpen);
   };
 
   const handleCloseLanguageMenu = () => {
-    setLanguageAnchorEl(null);
+    setIsLanguageMenuOpen(false);
   };
 
   const toggleLanguage = (language) => {
     i18n.changeLanguage(language);
-    handleCloseLanguageMenu();
+    setIsLanguageMenuOpen(false);
   };
 
   const getTotalItems = () => {
@@ -78,56 +76,56 @@ const Topbar = ({ cart }) => {
       { id: 2, title: t("menu"), url: "/menu" },
     ];
 
+    const adminLinks = [
+      ...baseLinks,
+      { id: 3, title: t("dashboard"), url: "/barista-dashboard" },
+      { id: 4, title: t("create_menu"), url: "/menu/create" },
+    ];
+
+    const baristaLinks = [
+      ...baseLinks,
+      { id: 5, title: t("dashboard"), url: "/barista-dashboard" },
+      { id: 6, title: t("create_menu"), url: "/menu/create" },
+    ];
+
+    const customerLinks = [
+      ...baseLinks,
+      { id: 7, title: t("cart"), url: "/cart" },
+    ];
+
     if (isLoggedIn) {
       const roleSpecificLinks =
         userRole === "Barista"
-          ? [
-              {
-                id: 3,
-                title: t("dashboard"),
-                url: "/barista-dashboard",
-              },
-            ]
-          : [
-              {
-                id: 4,
-                title: t("profile"),
-                url: `/profile/${userInfo._id}`,
-              },
-              {
-                id: 5,
-                title: t("cart"),
-                url: "/cart",
-                icon: (
-                  <Badge
-                    badgeContent={getTotalItems()}
-                    color="primary"
-                    sx={{
-                      "& .MuiBadge-badge": {
-                        backgroundColor: "#DA9F5B",
-                        color: "white",
-                      },
-                    }}
-                  >
-                    <ShoppingCartIcon />
-                  </Badge>
-                ),
-              },
-            ];
+          ? baristaLinks
+          : userRole === "Admin"
+          ? adminLinks
+          : customerLinks;
 
       return [
-        ...baseLinks,
         ...roleSpecificLinks,
         {
-          id: 6,
-          title: t("logout"),
-          url: "/",
-          onClick: handleLogout,
+          id: 5,
+          title: t("cart"),
+          url: "/cart",
+          icon: (
+            <Badge
+              badgeContent={getTotalItems()}
+              color="primary"
+              sx={{
+                "& .MuiBadge-badge": {
+                  backgroundColor: "#DA9F5B",
+                  color: "white",
+                },
+              }}
+            >
+              <ShoppingCartIcon />
+            </Badge>
+          ),
         },
       ];
     }
 
-    return [...baseLinks, { id: 6, title: t("login"), url: "/login" }];
+    return baseLinks;
   };
 
   const links = getNavigationLinks();
@@ -144,14 +142,14 @@ const Topbar = ({ cart }) => {
         <div className="flex items-center justify-between py-4">
           <h1
             className={`${
-              isNonMobile ? "text-2xl" : "text-sm"
+              isDesktop ? "text-2xl" : "text-sm"
             } font-semibold text-[#FFF8F0]`}
           >
             {t("Coffee Shop")}
           </h1>
 
           {/* Only show these items on non-mobile screens */}
-          {isNonMobile && (
+          {isDesktop && (
             <div className="flex items-center space-x-4">
               <div className="relative">
                 <button
@@ -160,7 +158,7 @@ const Topbar = ({ cart }) => {
                 >
                   <TranslateOutlinedIcon />
                 </button>
-                {Boolean(languageAnchorEl) && (
+                {isLanguageMenuOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1">
                     <button
                       onClick={() => toggleLanguage("en")}
@@ -178,6 +176,7 @@ const Topbar = ({ cart }) => {
                 )}
               </div>
 
+              {/* Navigation Links */}
               <nav className="flex items-center space-x-4">
                 {links.map((item) => (
                   <Link
@@ -189,6 +188,45 @@ const Topbar = ({ cart }) => {
                     {item.title}
                   </Link>
                 ))}
+
+                {/* Profile Menu */}
+                <div className="relative">
+                  <button
+                    onClick={handleProfileMenu}
+                    className="p-2 text-[#FFF8F0] hover:text-primary transition-colors rounded-full"
+                  >
+                    <AccountCircleIcon />
+                  </button>
+                  {isProfileMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1">
+                      {isLoggedIn ? (
+                        <>
+                          <Link
+                            to={`/profile/${userInfo?._id}`}
+                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          >
+                            {t("profile")}
+                          </Link>
+                          <button
+                            onClick={handleLogout}
+                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          >
+                            {t("logout")}
+                          </button>
+                        </>
+                      ) : (
+                        <Link
+                          to="/login"
+                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          {t("login")}
+                        </Link>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Cart */}
                 <Link
                   to="/cart"
                   className="text-[#FFF8F0] hover:text-primary transition-colors"
@@ -211,31 +249,13 @@ const Topbar = ({ cart }) => {
           )}
         </div>
       </div>
-      <Dialog
+      <Modal
         open={openModal}
         onClose={() => handleModalClose(false)}
-        aria-labelledby="logout-dialog-title"
-        aria-describedby="logout-dialog-description"
-      >
-        <DialogTitle id="logout-dialog-title">{t("confirmLogout")}</DialogTitle>
-        <DialogContent>
-          <DialogContentText id="logout-dialog-description">
-            {t("logoutConfirmation")}
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => handleModalClose(false)} color="primary">
-            {t("cancel")}
-          </Button>
-          <Button
-            onClick={() => handleModalClose(true)}
-            color="primary"
-            autoFocus
-          >
-            {t("logout")}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        onConfirm={() => handleModalClose(true)}
+        title={t("confirmLogout")}
+        message={t("logoutConfirmation")}
+      />
     </div>
   );
 };
