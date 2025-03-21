@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { motion } from "framer-motion";
@@ -12,12 +12,24 @@ import {
   Select,
   MenuItem,
   Box,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
 import { Formik, Form } from "formik";
 import * as yup from "yup";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Backdrop from "../components/Backdrop";
+import { createMenuItem } from "../redux/menuSlice";
+import {
+  fetchCategories,
+  createCategory,
+  deleteCategory,
+  updateCategory,
+} from "../redux/categorySlice";
 
 const CreateMenu = () => {
   const ref = useRef(null);
@@ -28,6 +40,17 @@ const CreateMenu = () => {
 
   const [previewImage, setPreviewImage] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [newCategory, setNewCategory] = useState("");
+  const [editingCategoryId, setEditingCategoryId] = useState(null);
+
+  const { categories, status: categoryStatus } = useSelector(
+    (state) => state.category
+  );
+
+  useEffect(() => {
+    dispatch(fetchCategories());
+  }, [dispatch]);
 
   // Get user info from Redux store to check role
   const { userInfo } = useSelector((state) => state.user);
@@ -35,20 +58,60 @@ const CreateMenu = () => {
     userInfo?.role === "Admin" || userInfo?.role === "Barista";
 
   const validationSchema = yup.object().shape({
-    name: yup.string().required(t("name_required")),
+    name: yup.string().required(t("item_name_required")),
     price: yup
       .number()
-      .required(t("price_required"))
-      .positive(t("price_positive")),
-    category: yup.string().required(t("category_required")),
-    image: yup.mixed().required(t("image_required")),
+      .required(t("item_price_required"))
+      .positive(t("item_price_positive"))
+      .typeError(t("item_price_valid_number")),
+    category: yup.string().required(t("item_category_required")),
   });
 
   const initialValues = {
     name: "",
-    price: "",
+    description: "",
+    price: null,
     category: "",
     image: null,
+  };
+
+  const handleCreateCategory = async () => {
+    try {
+      await dispatch(createCategory(newCategory)).unwrap();
+      setNewCategory("");
+      setOpenDialog(false);
+    } catch (error) {
+      console.error("Error creating category:", error);
+    }
+  };
+
+  // Handle edit and delete actions
+  const handleEditCategory = (category) => {
+    // Open dialog to edit category
+    setNewCategory(category.name);
+    setEditingCategoryId(category._id);
+    setOpenDialog(true);
+  };
+
+  const handleDeleteCategory = async (id) => {
+    try {
+      await dispatch(deleteCategory(id)).unwrap();
+    } catch (error) {
+      console.error("Failed to delete category:", error);
+    }
+  };
+
+  // Update category in dialog
+  const handleUpdateCategory = async () => {
+    try {
+      await dispatch(
+        updateCategory({ id: editingCategoryId, name: newCategory })
+      ).unwrap();
+      setNewCategory("");
+      setOpenDialog(false);
+    } catch (error) {
+      console.error("Failed to update category:", error);
+    }
   };
 
   const handleSubmit = async (values, { setSubmitting, resetForm }) => {
@@ -61,17 +124,18 @@ const CreateMenu = () => {
     try {
       const formData = new FormData();
       Object.keys(values).forEach((key) => {
-        if (key !== "image") {
+        if (key !== "image" && key !== "category") {
           formData.append(key, values[key]);
         }
       });
+
+      formData.append("category", values.category);
 
       if (values.image) {
         formData.append("image", values.image);
       }
 
-      // TODO: Add the createMenuItem action and dispatch it here
-      // await dispatch(createMenuItem(formData)).unwrap();
+      await dispatch(createMenuItem(formData)).unwrap();
 
       resetForm();
       setPreviewImage(null);
@@ -132,7 +196,7 @@ const CreateMenu = () => {
             validationSchema={validationSchema}
             onSubmit={handleSubmit}
           >
-            {({ errors, touched, setFieldValue, isSubmitting }) => (
+            {({ errors, touched, setFieldValue, isSubmitting, values }) => (
               <Form className="space-y-6">
                 <TextField
                   fullWidth
@@ -152,9 +216,28 @@ const CreateMenu = () => {
 
                 <TextField
                   fullWidth
+                  name="description"
+                  label={t("description")}
+                  onChange={(e) => setFieldValue("description", e.target.value)}
+                  multiline
+                  rows={4}
+                  error={touched.description && !!errors.description}
+                  helperText={touched.description && errors.description}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      color: "white",
+                      "& fieldset": { borderColor: "#DA9F5B" },
+                    },
+                    "& .MuiInputLabel-root": { color: "white" },
+                  }}
+                />
+
+                <TextField
+                  fullWidth
                   name="price"
                   label={t("price")}
                   type="number"
+                  inputProps={{ step: "0.01" }}
                   onChange={(e) => setFieldValue("price", e.target.value)}
                   error={touched.price && !!errors.price}
                   helperText={touched.price && errors.price}
@@ -173,6 +256,7 @@ const CreateMenu = () => {
                   </InputLabel>
                   <Select
                     name="category"
+                    value={values.category || ""}
                     onChange={(e) => setFieldValue("category", e.target.value)}
                     error={touched.category && !!errors.category}
                     sx={{
@@ -182,11 +266,35 @@ const CreateMenu = () => {
                       },
                     }}
                   >
-                    <MenuItem value="Hot Drinks">{t("hot_drinks")}</MenuItem>
-                    <MenuItem value="Cold Drinks">{t("cold_drinks")}</MenuItem>
-                    <MenuItem value="Snacks">{t("snacks")}</MenuItem>
-                    <MenuItem value="Food">{t("food")}</MenuItem>
+                    {categories.map((category) => (
+                      <MenuItem key={category._id} value={category._id}>
+                        {category.name}
+                        <Button onClick={() => handleEditCategory(category)}>
+                          Edit
+                        </Button>
+                        <Button
+                          onClick={() => handleDeleteCategory(category._id)}
+                        >
+                          Delete
+                        </Button>
+                      </MenuItem>
+                    ))}
                   </Select>
+                  <Button
+                    startIcon={<AddIcon />}
+                    onClick={() => setOpenDialog(true)}
+                    sx={{
+                      mt: 1,
+                      color: "white",
+                      borderColor: "#DA9F5B",
+                      "&:hover": {
+                        borderColor: "#c48f51",
+                      },
+                    }}
+                    variant="outlined"
+                  >
+                    {t("add_new_category")}
+                  </Button>
                 </FormControl>
 
                 <Box className="space-y-4">
@@ -245,6 +353,51 @@ const CreateMenu = () => {
           </Formik>
         </motion.div>
       </div>
+
+      {/* Add Category Dialog */}
+      <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
+        <DialogTitle>{t("create_new_category")}</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label={t("category_name")}
+            fullWidth
+            value={newCategory}
+            onChange={(e) => setNewCategory(e.target.value)}
+            sx={{
+              mt: 2,
+              "& .MuiOutlinedInput-root": {
+                "& fieldset": {
+                  borderColor: "#DA9F5B",
+                },
+              },
+            }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setOpenDialog(false)}
+            sx={{ color: "#DA9F5B" }}
+          >
+            {t("cancel")}
+          </Button>
+          <Button
+            onClick={handleCreateCategory}
+            disabled={!newCategory}
+            sx={{
+              backgroundColor: "#DA9F5B",
+              color: "white",
+              "&:hover": {
+                backgroundColor: "#c48f51",
+              },
+            }}
+          >
+            {t("create")}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       <Footer />
     </div>
   );

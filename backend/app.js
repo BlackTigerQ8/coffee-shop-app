@@ -3,6 +3,7 @@ const cors = require("cors");
 const helmet = require("helmet");
 const userRouter = require("./routes/userRoutes");
 const menuRouter = require("./routes/menuRoutes");
+const categoryRouter = require("./routes/categoryRoutes");
 const path = require("path");
 
 const app = express();
@@ -23,6 +24,7 @@ app.use((req, res, next) => {
 
 app.use("/api/users", userRouter);
 app.use("/api/menu", menuRouter);
+app.use("/api/categories", categoryRouter);
 app.use("/api/uploads", express.static(path.join(__dirname, "uploads")));
 
 module.exports = app;

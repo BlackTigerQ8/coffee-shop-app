@@ -29,6 +29,7 @@ i18n
           dashboard: "Dashboard",
           settings: "Settings",
           profile: "Profile",
+          create_menu: "Create Menu",
           notifications: "Notifications",
           messages: "Messages",
           search: "Search",
@@ -109,6 +110,7 @@ i18n
           order_id: "Order ID",
           edit_profile: "Edit Profile",
           save_changes: "Save Changes",
+          delivered: "Delivered",
 
           ///BARISTA DASHBOARD///
           barista_dashboard_title: "Barista Dashboard",
@@ -148,6 +150,32 @@ i18n
           daily_total: "Daily Total",
           transactions: "Transactions",
           order_status: "Order Status",
+
+          ///CREATE MENU///
+          create_menu_title: "Create Menu",
+          create_menu_item_subtitle: "Create a new menu item",
+          create_item: "Create Item",
+          create_menu_item: "Create Menu Item",
+          upload_image: "Upload Image",
+          item_name: "Item Name",
+          item_price: "Item Price",
+          item_description: "Item Description",
+          item_category: "Item Category",
+          item_image: "Item Image",
+          category: "Category",
+          description: "Description",
+          category_name: "Category Name",
+          no_menu_items_available: "No menu items available",
+
+          item_name_required: "Item name is required",
+          item_price_required: "Item price is required",
+          item_price_positive: "Item price must be positive",
+          item_category_required: "Item category is required",
+          item_description_required: "Item description is required",
+          item_image_required: "Item image is required",
+          add_new_category: "Add New Category",
+          create_new_category: "Create New Category",
+          create: "Create",
 
           ///CART///
           cart_subtitle: "Review your selected items and proceed to checkout",
@@ -206,11 +234,12 @@ i18n
           login: "تسجيل الدخول",
           register: "تسجيل الخروج",
           logout: "تسجيل الخروج",
-          menu: "القائمة",
+          menu: "قائمة الطلبات",
           cart: "السلة",
           dashboard: "لوحة التحكم",
           settings: "الإعدادات",
           profile: "الحساب الشخصي",
+          create_menu: "إنشاء قائمة طلبات",
           notifications: "الإشعارات",
           messages: "الرسائل",
           search: "بحث",
@@ -289,6 +318,7 @@ i18n
           order_id: "رقم الطلب",
           edit_profile: "تعديل الملف الشخصي",
           save_changes: "حفظ التغييرات",
+          delivered: "تم التوصيل",
 
           ///BARISTA DASHBOARD///
           collect_payment: "جمع المدفوعات",
@@ -326,6 +356,32 @@ i18n
           daily_total: "المجموع اليومي",
           transactions: "عمليات الدفع",
           order_status: "حالة الطلب",
+
+          ///CREATE MENU///
+          create_menu_title: "إنشاء قائمة",
+          create_menu_item_subtitle: "إنشاء عنصر قائمة جديد",
+          create_item: "إنشاء عنصر",
+          create_menu_item: "إنشاء عنصر قائمة",
+          upload_image: "رفع الصورة",
+          item_name: "اسم العنصر",
+          item_price: "سعر العنصر",
+          item_description: "وصف العنصر",
+          item_category: "قائمة العنصر",
+          item_image: "صورة العنصر",
+          category: "قائمة",
+          description: "الوصف",
+          category_name: "اسم قائمة",
+          no_menu_items_available: "لا يوجد عناصر في القائمة",
+
+          item_name_required: "اسم العنصر مطلوب",
+          item_price_required: "سعر العنصر مطلوب",
+          item_price_positive: "سعر العنصر يجب أن يكون موجب",
+          item_category_required: "قائمة العنصر مطلوبة",
+          item_description_required: "وصف العنصر مطلوب",
+          item_image_required: "صورة العنصر مطلوبة",
+          add_new_category: "إضافة قائمة جديدة",
+          create_new_category: "إنشاء قائمة جديدة",
+          create: "إنشاء",
 
           ///CART///
           cart_subtitle: "استعرض عناصر السلة واستمر في الدفع",

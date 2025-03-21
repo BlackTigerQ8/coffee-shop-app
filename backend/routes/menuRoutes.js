@@ -4,6 +4,7 @@ const {
   createMenuItem,
   updateMenuItem,
   deleteMenuItem,
+  getMenuItem,
 } = require("../controllers/menuController");
 const { protect, restrictTo } = require("../middleware/authMiddleware");
 const { menuImageUpload } = require("./uploadRoutes");
@@ -20,6 +21,7 @@ router.use(restrictTo("Admin", "Barista"));
 router.post("/", menuImageUpload.single("image"), createMenuItem);
 router
   .route("/:id")
+  .get(getMenuItem)
   .put(menuImageUpload.single("image"), updateMenuItem)
   .delete(deleteMenuItem);
 

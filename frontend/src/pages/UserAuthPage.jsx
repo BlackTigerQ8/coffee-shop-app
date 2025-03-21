@@ -129,7 +129,7 @@ const UserAuthPage = () => {
       if (isLogin) {
         const result = await dispatch(
           loginUser({
-            emailOrPhone: values.email,
+            emailOrPhone: values.email.toLowerCase(),
             password: values.password,
           })
         ).unwrap();
@@ -154,7 +154,7 @@ const UserAuthPage = () => {
         if (result.status === "Success") {
           await dispatch(
             loginUser({
-              emailOrPhone: values.email,
+              emailOrPhone: values.email.toLowerCase(),
               password: values.password,
             })
           ).unwrap();

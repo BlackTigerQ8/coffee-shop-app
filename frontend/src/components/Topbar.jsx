@@ -2,13 +2,14 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import TranslateOutlinedIcon from "@mui/icons-material/TranslateOutlined";
-import { useMediaQuery, Badge } from "@mui/material";
+import { useMediaQuery, Badge, Menu, MenuItem } from "@mui/material";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import { useSelector, useDispatch } from "react-redux";
 import { logoutUser } from "../redux/userSlice";
 import { fetchUsers } from "../redux/usersSlice";
 import Modal from "./Modal";
+
 const Topbar = ({ cart }) => {
   const isDesktop = useMediaQuery("(min-width: 1024px)");
   const { t, i18n } = useTranslation();
@@ -16,7 +17,7 @@ const Topbar = ({ cart }) => {
   const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [openModal, setOpenModal] = useState(false);
-  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [profileAnchorEl, setProfileAnchorEl] = useState(null);
   const { userInfo, userRole, token } = useSelector((state) => state.user);
   const isLoggedIn = Boolean(token);
   const dispatch = useDispatch();
@@ -28,8 +29,12 @@ const Topbar = ({ cart }) => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const handleProfileMenu = () => {
-    setIsProfileMenuOpen(!isProfileMenuOpen);
+  const handleProfileMenuOpen = (event) => {
+    setProfileAnchorEl(event.currentTarget);
+  };
+
+  const handleProfileMenuClose = () => {
+    setProfileAnchorEl(null);
   };
 
   useEffect(() => {
@@ -101,28 +106,7 @@ const Topbar = ({ cart }) => {
           ? adminLinks
           : customerLinks;
 
-      return [
-        ...roleSpecificLinks,
-        {
-          id: 5,
-          title: t("cart"),
-          url: "/cart",
-          icon: (
-            <Badge
-              badgeContent={getTotalItems()}
-              color="primary"
-              sx={{
-                "& .MuiBadge-badge": {
-                  backgroundColor: "#DA9F5B",
-                  color: "white",
-                },
-              }}
-            >
-              <ShoppingCartIcon />
-            </Badge>
-          ),
-        },
-      ];
+      return roleSpecificLinks;
     }
 
     return baseLinks;
@@ -190,60 +174,75 @@ const Topbar = ({ cart }) => {
                 ))}
 
                 {/* Profile Menu */}
-                <div className="relative">
+                <div>
                   <button
-                    onClick={handleProfileMenu}
+                    onClick={handleProfileMenuOpen}
                     className="p-2 text-[#FFF8F0] hover:text-primary transition-colors rounded-full"
                   >
                     <AccountCircleIcon />
                   </button>
-                  {isProfileMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1">
-                      {isLoggedIn ? (
-                        <>
-                          <Link
-                            to={`/profile/${userInfo?._id}`}
-                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                          >
-                            {t("profile")}
-                          </Link>
-                          <button
-                            onClick={handleLogout}
-                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                          >
-                            {t("logout")}
-                          </button>
-                        </>
-                      ) : (
-                        <Link
-                          to="/login"
-                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                        >
-                          {t("login")}
-                        </Link>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Cart */}
-                <Link
-                  to="/cart"
-                  className="text-[#FFF8F0] hover:text-primary transition-colors"
-                >
-                  <Badge
-                    badgeContent={getTotalItems()}
-                    color="primary"
-                    sx={{
-                      "& .MuiBadge-badge": {
-                        backgroundColor: "#DA9F5B",
-                        color: "white",
-                      },
+                  <Menu
+                    anchorEl={profileAnchorEl}
+                    open={Boolean(profileAnchorEl)}
+                    onClose={handleProfileMenuClose}
+                    anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                    transformOrigin={{
+                      vertical: "top",
+                      horizontal: "center",
                     }}
                   >
-                    <ShoppingCartIcon />
-                  </Badge>
-                </Link>
+                    {isLoggedIn ? (
+                      <>
+                        <MenuItem
+                          onClick={() => {
+                            handleProfileMenuClose();
+                            navigate(`/profile/${userInfo?._id}`);
+                          }}
+                        >
+                          {t("profile")}
+                        </MenuItem>
+                        <MenuItem
+                          onClick={() => {
+                            handleProfileMenuClose();
+                            handleLogout();
+                          }}
+                        >
+                          {t("logout")}
+                        </MenuItem>
+                      </>
+                    ) : (
+                      <MenuItem
+                        onClick={() => {
+                          handleProfileMenuClose();
+                          navigate("/login");
+                        }}
+                      >
+                        {t("login")}
+                      </MenuItem>
+                    )}
+                  </Menu>
+                </div>
+
+                {/* Cart - Only show for customers */}
+                {userRole === "Customer" && (
+                  <Link
+                    to="/cart"
+                    className="text-[#FFF8F0] hover:text-primary transition-colors"
+                  >
+                    <Badge
+                      badgeContent={getTotalItems()}
+                      color="primary"
+                      sx={{
+                        "& .MuiBadge-badge": {
+                          backgroundColor: "#DA9F5B",
+                          color: "white",
+                        },
+                      }}
+                    >
+                      <ShoppingCartIcon />
+                    </Badge>
+                  </Link>
+                )}
               </nav>
             </div>
           )}

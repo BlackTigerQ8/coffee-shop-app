@@ -12,9 +12,9 @@ const menuItemSchema = new mongoose.Schema({
     min: [0, "Price cannot be negative"],
   },
   category: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Category",
     required: [true, "Category is required"],
-    enum: ["Hot Drinks", "Cold Drinks", "Snacks", "Food"],
   },
   description: {
     type: String,
@@ -22,7 +22,6 @@ const menuItemSchema = new mongoose.Schema({
   },
   image: {
     type: String,
-    required: [true, "Image is required"],
   },
   createdAt: {
     type: Date,

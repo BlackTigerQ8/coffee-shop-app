@@ -1,8 +1,8 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const { User } = require("./models/userModel");
+const MenuItem = require("./models/menuModel");
 const connectDB = require("./config/db.js");
-
 connectDB();
 
 // Function to create Admin
@@ -54,6 +54,57 @@ const deleteAllUsers = async () => {
   }
 };
 
+const createMenuItems = async () => {
+  try {
+    // Check if menu items already exist
+    const menuItems = await MenuItem.find();
+    if (menuItems.length > 0) {
+      console.log("Menu items already exist");
+      return;
+    }
+
+    // Create new menu items
+    const newMenuItems = [
+      {
+        name: "Coffee",
+        price: 10,
+        category: "Hot Drinks",
+        description: "A cup of coffee",
+        image: "coffee.jpg",
+      },
+      {
+        name: "Tea",
+        price: 5,
+        category: "Hot Drinks",
+        description: "A cup of tea",
+        image: "tea.jpg",
+      },
+      {
+        name: "Sandwich",
+        price: 15,
+        category: "Snacks",
+        description: "A sandwich",
+        image: "sandwich.jpg",
+      },
+      {
+        name: "Burger",
+        price: 20,
+        category: "Food",
+        description: "A burger",
+        image: "burger.jpg",
+      },
+    ];
+
+    await MenuItem.insertMany(newMenuItems);
+    console.log("Menu items created successfully");
+  } catch (error) {
+    console.error("Error creating menu items:", error);
+  } finally {
+    mongoose.connection.close();
+  }
+};
+
 // Uncomment the relevant function call as needed
-createAdmin();
+// createAdmin();
 // deleteAllUsers();
+createMenuItems();

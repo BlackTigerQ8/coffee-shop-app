@@ -111,7 +111,7 @@ const UserProfilePage = () => {
       id: "ORD-001",
       date: "2024-03-15",
       total: 42.5,
-      status: "Delivered",
+      status: "delivered",
       items: [
         { name: "Cappuccino", quantity: 2, price: 8.5 },
         { name: "Croissant", quantity: 3, price: 8.5 },

@@ -1,42 +1,46 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Header from "../components/Header";
 import { motion } from "framer-motion";
 import { useInView } from "framer-motion";
 import { useRef } from "react";
-import { Button, IconButton } from "@mui/material";
+import { Button, IconButton, Alert } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
 import CustomCard from "../components/Card";
 import CardImg from "../assets/card.jpg";
 import Footer from "../components/Footer";
 import BackToTop from "../components/BackToTop";
-
-const menuItems = {
-  "Hot Drinks": [
-    { id: 1, name: "Espresso", price: 3.5, image: CardImg },
-    { id: 2, name: "Cappuccino", price: 4.5, image: CardImg },
-    { id: 3, name: "Latte", price: 4.0, image: CardImg },
-  ],
-  "Cold Drinks": [
-    { id: 4, name: "Iced Coffee", price: 4.0, image: CardImg },
-    { id: 5, name: "Frappuccino", price: 5.5, image: CardImg },
-    { id: 6, name: "Cold Brew", price: 4.5, image: CardImg },
-  ],
-  Snacks: [
-    { id: 7, name: "Croissant", price: 3.0, image: CardImg },
-    { id: 8, name: "Muffin", price: 2.5, image: CardImg },
-    { id: 9, name: "Cookie", price: 2.0, image: CardImg },
-  ],
-  Food: [
-    { id: 10, name: "Sandwich", price: 8.0, image: CardImg },
-    { id: 11, name: "Salad", price: 9.0, image: CardImg },
-    { id: 12, name: "Quiche", price: 7.5, image: CardImg },
-  ],
-};
-
+import { useDispatch, useSelector } from "react-redux";
+import { fetchMenuItems } from "../redux/menuSlice";
+import Backdrop from "../components/Backdrop";
+import { useTranslation } from "react-i18next";
 const MenuPage = ({ cart, setCart }) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { margin: "-100px" });
+  const dispatch = useDispatch();
+  const { t } = useTranslation();
+  const API_URL = import.meta.env.VITE_API_URL;
+
+  const { items = [], status, error } = useSelector((state) => state.menu);
+  const isLoading = status === "loading";
+
+  console.log("Image URL:", `${API_URL}/${items.image}`);
+  console.log(items);
+
+  useEffect(() => {
+    dispatch(fetchMenuItems());
+  }, [dispatch]);
+
+  // Group items by category
+  const groupedItems = items?.reduce((acc, item) => {
+    // Safely access category name, fallback to "Other" if category is undefined
+    const categoryName = item?.category?.name || "Other";
+    if (!acc[categoryName]) {
+      acc[categoryName] = [];
+    }
+    acc[categoryName].push(item);
+    return acc;
+  }, {});
 
   const containerVariants = {
     hidden: {
@@ -118,8 +122,13 @@ const MenuPage = ({ cart, setCart }) => {
     return item ? item.quantity : 0;
   };
 
+  if (error) {
+    return <Alert severity="error">Error: {error}</Alert>;
+  }
+
   return (
     <div ref={ref}>
+      <Backdrop isOpen={isLoading} />
       <Header
         title="Our Menu"
         subtitle="Choose your favorite drink and enjoy the best coffee in town"
@@ -130,7 +139,7 @@ const MenuPage = ({ cart, setCart }) => {
         initial="hidden"
         animate={isInView ? "visible" : "hidden"}
       >
-        {Object.entries(menuItems).map(([category, items]) => (
+        {Object.entries(groupedItems).map(([category, items]) => (
           <motion.div
             key={category}
             className="w-full max-w-7xl mb-12"
@@ -146,67 +155,81 @@ const MenuPage = ({ cart, setCart }) => {
               className="flex flex-wrap gap-6 justify-center"
               variants={containerVariants}
             >
-              {items.map((item) => (
-                <motion.div
-                  key={item.id}
-                  variants={cardVariants}
-                  whileHover={{ scale: 1.02 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <CustomCard>
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="w-full h-40 object-cover"
-                    />
-                    <div className="px-4 mt-3">
-                      <h1 className="text-xl font-semibold">{item.name}</h1>
-                      <p className="mb-2">${item.price.toFixed(2)}</p>
-                      <div className="flex items-center gap-2 justify-between">
-                        <Button
-                          variant="contained"
-                          size="small"
-                          disabled={getItemQuantity(item.id) === 0}
-                          onClick={() => {
-                            const qty = getItemQuantity(item.id);
-                            for (let i = 0; i < qty; i++) {
-                              addToCart(item);
-                            }
-                          }}
-                          sx={{
-                            backgroundColor: "#6F4E37",
-                            "&:hover": {
-                              backgroundColor: "#5C4132",
-                            },
-                            minWidth: "auto",
-                            px: 2,
-                          }}
-                        >
-                          Add
-                        </Button>
-                        <div className="flex justify-end items-center gap-1">
-                          <IconButton
+              {items.length > 0 ? (
+                items.map((item) => (
+                  <motion.div
+                    key={item._id}
+                    variants={cardVariants}
+                    whileHover={{ scale: 1.02 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <CustomCard>
+                      <img
+                        src={`${API_URL}/${item.image}`}
+                        alt={item.name}
+                        crossOrigin="anonymous"
+                        onError={(e) => {
+                          console.error("Failed to load image:", e.target.src);
+                          e.target.onerror = null;
+                          e.target.src = CardImg;
+                        }}
+                        className="w-full h-40 object-cover"
+                      />
+                      <div className="px-4 mt-3">
+                        <h1 className="text-xl font-semibold">{item.name}</h1>
+                        <p className="mb-2">${item.price.toFixed(2)}</p>
+                        <div className="flex items-center gap-2 justify-between">
+                          <Button
+                            variant="contained"
                             size="small"
-                            onClick={() => removeFromCart(item.id)}
                             disabled={getItemQuantity(item.id) === 0}
+                            onClick={() => {
+                              const qty = getItemQuantity(item.id);
+                              for (let i = 0; i < qty; i++) {
+                                addToCart(item);
+                              }
+                            }}
+                            sx={{
+                              backgroundColor: "#6F4E37",
+                              "&:hover": {
+                                backgroundColor: "#5C4132",
+                              },
+                              minWidth: "auto",
+                              px: 2,
+                            }}
                           >
-                            <RemoveIcon />
-                          </IconButton>
-                          <span className="w-8 text-center">
-                            {getItemQuantity(item.id)}
-                          </span>
-                          <IconButton
-                            size="small"
-                            onClick={() => addToCart(item)}
-                          >
-                            <AddIcon />
-                          </IconButton>
+                            Add
+                          </Button>
+                          <div className="flex justify-end items-center gap-1">
+                            <IconButton
+                              size="small"
+                              onClick={() => removeFromCart(item.id)}
+                              disabled={getItemQuantity(item.id) === 0}
+                            >
+                              <RemoveIcon />
+                            </IconButton>
+                            <span className="w-8 text-center">
+                              {getItemQuantity(item.id)}
+                            </span>
+                            <IconButton
+                              size="small"
+                              onClick={() => addToCart(item)}
+                            >
+                              <AddIcon />
+                            </IconButton>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </CustomCard>
-                </motion.div>
-              ))}
+                    </CustomCard>
+                  </motion.div>
+                ))
+              ) : (
+                <Alert severity="error">
+                  <h2 className="text-2xl text-secondary mb-4">
+                    {t("no_menu_items_available")}
+                  </h2>
+                </Alert>
+              )}
             </motion.div>
           </motion.div>
         ))}

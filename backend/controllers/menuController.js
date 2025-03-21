@@ -5,7 +5,9 @@ const MenuItem = require("../models/menuModel");
 // @access  Public
 const getAllMenuItems = async (req, res) => {
   try {
-    const menuItems = await MenuItem.find().sort({ category: 1 });
+    const menuItems = await MenuItem.find()
+      .populate("category")
+      .sort({ category: 1 });
     res.status(200).json({
       status: "Success",
       data: {
@@ -28,22 +30,45 @@ const createMenuItem = async (req, res) => {
     const uploadedFile = req.file;
     const filePath = uploadedFile ? uploadedFile.path : null;
 
-    if (!filePath) {
-      return res.status(400).json({
-        status: "Error",
-        message: "Image is required",
-      });
-    }
-
-    const menuItem = await MenuItem.create({
+    const menuItemData = {
       name: req.body.name,
       price: req.body.price,
       category: req.body.category,
       description: req.body.description,
       image: filePath,
-    });
+    };
+
+    const menuItem = await MenuItem.create(menuItemData);
 
     res.status(201).json({
+      status: "Success",
+      data: {
+        item: menuItem,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: "Error",
+      message: error.message,
+    });
+  }
+};
+
+// @desc    Get menu item by ID
+// @route   GET /api/menu/:id
+// @access  Public
+const getMenuItem = async (req, res) => {
+  try {
+    const menuItem = await MenuItem.findById(req.params.id);
+
+    if (!menuItem) {
+      return res.status(404).json({
+        status: "Error",
+        message: "Menu item not found",
+      });
+    }
+
+    res.status(200).json({
       status: "Success",
       data: {
         item: menuItem,
@@ -124,6 +149,7 @@ const deleteMenuItem = async (req, res) => {
 
 module.exports = {
   getAllMenuItems,
+  getMenuItem,
   createMenuItem,
   updateMenuItem,
   deleteMenuItem,

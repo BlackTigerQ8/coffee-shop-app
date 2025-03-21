@@ -135,11 +135,12 @@ const menuSlice = createSlice({
       })
       .addCase(fetchMenuItems.fulfilled, (state, action) => {
         state.status = "succeeded";
-        state.menuItems = action.payload.data.menuItems;
+        state.items = action.payload.data.items || [];
       })
       .addCase(fetchMenuItems.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.error.message;
+        dispatchToast(i18next.t(state.error), "error");
       });
     // update menu item
     builder
@@ -148,8 +149,8 @@ const menuSlice = createSlice({
       })
       .addCase(updateMenuItem.fulfilled, (state, action) => {
         state.status = "succeeded";
-        const updatedMenuItem = action.payload.data.menuItem;
-        state.menuItems = state.menuItems.map((item) =>
+        const updatedMenuItem = action.payload.data.items;
+        state.items = state.items.map((item) =>
           item._id === updatedMenuItem._id ? updatedMenuItem : item
         );
         dispatchToast(i18next.t("updateMenuItemFulfilled"), "success");
@@ -167,7 +168,7 @@ const menuSlice = createSlice({
       .addCase(deleteMenuItem.fulfilled, (state, action) => {
         state.status = "succeeded";
         const deletedMenuItemId = action.meta.arg;
-        state.menuItems = state.menuItems.filter(
+        state.items = state.items.filter(
           (item) => item._id !== deletedMenuItemId
         );
         dispatchToast(i18next.t("deleteMenuItemFulfilled"), "success");
