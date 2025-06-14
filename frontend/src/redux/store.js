@@ -5,6 +5,7 @@ import storage from "redux-persist/lib/storage"; // defaults to localStorage for
 import usersReducer from "./usersSlice";
 import menuReducer from "./menuSlice";
 import categoryReducer from "./categorySlice";
+import resourceReducer from "./resourceSlice";
 
 const persistConfig = {
   key: "root",
@@ -16,6 +17,7 @@ const rootReducer = combineReducers({
   users: usersReducer,
   menu: menuReducer,
   category: categoryReducer,
+  resource: resourceReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

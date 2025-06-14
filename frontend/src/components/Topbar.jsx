@@ -84,13 +84,13 @@ const Topbar = ({ cart }) => {
     const adminLinks = [
       ...baseLinks,
       { id: 3, title: t("dashboard"), url: "/barista-dashboard" },
-      { id: 4, title: t("create_menu"), url: "/menu/create" },
+      { id: 4, title: t("manage_menu"), url: "/menu/management" },
     ];
 
     const baristaLinks = [
       ...baseLinks,
       { id: 5, title: t("dashboard"), url: "/barista-dashboard" },
-      { id: 6, title: t("create_menu"), url: "/menu/create" },
+      { id: 6, title: t("manage_menu"), url: "/menu/management" },
     ];
 
     const customerLinks = [

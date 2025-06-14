@@ -105,6 +105,6 @@ const createMenuItems = async () => {
 };
 
 // Uncomment the relevant function call as needed
-// createAdmin();
+createAdmin();
 // deleteAllUsers();
-createMenuItems();
+// createMenuItems();

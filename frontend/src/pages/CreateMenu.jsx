@@ -211,6 +211,9 @@ const CreateMenu = () => {
                       "& fieldset": { borderColor: "#DA9F5B" },
                     },
                     "& .MuiInputLabel-root": { color: "white" },
+                    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#FFF8F0",
+                    },
                   }}
                 />
 
@@ -229,6 +232,9 @@ const CreateMenu = () => {
                       "& fieldset": { borderColor: "#DA9F5B" },
                     },
                     "& .MuiInputLabel-root": { color: "white" },
+                    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#FFF8F0",
+                    },
                   }}
                 />
 
@@ -247,6 +253,9 @@ const CreateMenu = () => {
                       "& fieldset": { borderColor: "#DA9F5B" },
                     },
                     "& .MuiInputLabel-root": { color: "white" },
+                    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#FFF8F0",
+                    },
                   }}
                 />
 
@@ -264,6 +273,10 @@ const CreateMenu = () => {
                       "& .MuiOutlinedInput-notchedOutline": {
                         borderColor: "#DA9F5B",
                       },
+                      "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                        borderColor: "#FFF8F0",
+                      },
+                      "& .MuiInputLabel-root": { color: "white" },
                     }}
                   >
                     {categories.map((category) => (
@@ -377,13 +390,18 @@ const CreateMenu = () => {
         </DialogContent>
         <DialogActions>
           <Button
-            onClick={() => setOpenDialog(false)}
+            onClick={() => {
+              setOpenDialog(false);
+              setEditingCategoryId(null);
+            }}
             sx={{ color: "#DA9F5B" }}
           >
             {t("cancel")}
           </Button>
           <Button
-            onClick={handleCreateCategory}
+            onClick={
+              editingCategoryId ? handleUpdateCategory : handleCreateCategory
+            }
             disabled={!newCategory}
             sx={{
               backgroundColor: "#DA9F5B",
@@ -393,7 +411,7 @@ const CreateMenu = () => {
               },
             }}
           >
-            {t("create")}
+            {editingCategoryId ? t("update") : t("create")}
           </Button>
         </DialogActions>
       </Dialog>

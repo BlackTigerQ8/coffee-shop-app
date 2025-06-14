@@ -14,6 +14,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchMenuItems } from "../redux/menuSlice";
 import Backdrop from "../components/Backdrop";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 const MenuPage = ({ cart, setCart }) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { margin: "-100px" });
@@ -21,18 +22,17 @@ const MenuPage = ({ cart, setCart }) => {
   const { t } = useTranslation();
   const API_URL = import.meta.env.VITE_API_URL;
 
-  const { items = [], status, error } = useSelector((state) => state.menu);
+  const { menuItems = [], status, error } = useSelector((state) => state.menu);
   const isLoading = status === "loading";
-
-  console.log("Image URL:", `${API_URL}/${items.image}`);
-  console.log(items);
+  const { userInfo } = useSelector((state) => state.user);
+  const navigate = useNavigate();
 
   useEffect(() => {
     dispatch(fetchMenuItems());
   }, [dispatch]);
 
   // Group items by category
-  const groupedItems = items?.reduce((acc, item) => {
+  const groupedItems = menuItems?.reduce((acc, item) => {
     // Safely access category name, fallback to "Other" if category is undefined
     const categoryName = item?.category?.name || "Other";
     if (!acc[categoryName]) {
@@ -134,6 +134,32 @@ const MenuPage = ({ cart, setCart }) => {
         subtitle="Choose your favorite drink and enjoy the best coffee in town"
       />
       <motion.div
+        className="flex flex-col items-end w-full p-8"
+        variants={containerVariants}
+        initial="hidden"
+        animate={isInView ? "visible" : "hidden"}
+      >
+        {(userInfo?.role === "Admin" || userInfo?.role === "Barista") && (
+          <Button
+            onClick={() => navigate("/menu/dashboard")}
+            sx={{
+              backgroundColor: "#DA9F5B",
+              "&:hover": {
+                backgroundColor: "#c48f51",
+              },
+              color: "white",
+              fontWeight: "bold",
+              textTransform: "uppercase",
+              fontSize: "1rem",
+              padding: "0.5rem 1rem",
+              borderRadius: "0.5rem",
+            }}
+          >
+            Manage Menu
+          </Button>
+        )}
+      </motion.div>
+      <motion.div
         className="flex flex-col items-center w-full p-8"
         variants={containerVariants}
         initial="hidden"
@@ -177,6 +203,7 @@ const MenuPage = ({ cart, setCart }) => {
                       />
                       <div className="px-4 mt-3">
                         <h1 className="text-xl font-semibold">{item.name}</h1>
+                        <p className="mb-2">{item.description}</p>
                         <p className="mb-2">${item.price.toFixed(2)}</p>
                         <div className="flex items-center gap-2 justify-between">
                           <Button

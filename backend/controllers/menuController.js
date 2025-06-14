@@ -147,10 +147,77 @@ const deleteMenuItem = async (req, res) => {
   }
 };
 
+// Process order and deduct stock
+const processOrder = async (req, res) => {
+  try {
+    const { items } = req.body; // Array of { menuItemId, quantity }
+
+    // Check if all items can be made
+    const unavailableItems = [];
+    const menuItems = [];
+
+    for (let orderItem of items) {
+      const menuItem = await MenuItem.findById(orderItem.menuItemId).populate(
+        "ingredients.resource"
+      );
+      if (!menuItem) {
+        return res.status(404).json({
+          status: "Error",
+          message: `Menu item not found: ${orderItem.menuItemId}`,
+        });
+      }
+
+      menuItems.push({ menuItem, quantity: orderItem.quantity });
+
+      // Check if item can be made with current stock
+      for (let ingredient of menuItem.ingredients) {
+        const requiredQuantity = ingredient.quantity * orderItem.quantity;
+        if (ingredient.resource.currentStock < requiredQuantity) {
+          unavailableItems.push({
+            menuItem: menuItem.name,
+            resource: ingredient.resource.name,
+            required: requiredQuantity,
+            available: ingredient.resource.currentStock,
+          });
+        }
+      }
+    }
+
+    if (unavailableItems.length > 0) {
+      return res.status(400).json({
+        status: "Error",
+        message: "Insufficient stock for some items",
+        data: { unavailableItems },
+      });
+    }
+
+    // Deduct stock for all items
+    for (let { menuItem, quantity } of menuItems) {
+      for (let ingredient of menuItem.ingredients) {
+        await Resource.findByIdAndUpdate(ingredient.resource._id, {
+          $inc: { currentStock: -(ingredient.quantity * quantity) },
+        });
+      }
+    }
+
+    res.status(200).json({
+      status: "Success",
+      message: "Order processed successfully",
+      data: { processedItems: items.length },
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: "Error",
+      message: error.message,
+    });
+  }
+};
+
 module.exports = {
   getAllMenuItems,
   getMenuItem,
   createMenuItem,
   updateMenuItem,
   deleteMenuItem,
+  processOrder,
 };

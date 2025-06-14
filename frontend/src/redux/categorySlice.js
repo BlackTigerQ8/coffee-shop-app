@@ -70,7 +70,7 @@ export const updateCategory = createAsyncThunk(
   async ({ id, name }, { getState }) => {
     try {
       const { token } = getState().user;
-      const response = await axios.patch(
+      const response = await axios.put(
         `${API_URL}/categories/${id}`,
         { name },
         {

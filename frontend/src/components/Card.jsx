@@ -10,8 +10,8 @@ const CustomCard = ({ children, className = "", ...props }) => {
         position: "relative",
         backgroundColor: "#d6c4ae",
         margin: "1rem",
-        width: "250px",
-        height: "300px",
+        width: "260px",
+        height: "380px",
         ...props.sx,
       }}
       {...props}

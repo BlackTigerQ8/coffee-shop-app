@@ -21,8 +21,9 @@ import UserAuthPage from "./pages/UserAuthPage";
 import OrderConfirmationPage from "./pages/OrderConfirmationPage";
 import UserProfilePage from "./pages/UserProfilePage";
 import BaristaDashboard from "./pages/BaristaDashboard";
-import CreateMenu from "./pages/CreateMenu";
+import MenuManagement from "./pages/MenuManagement";
 import NotFoundPage from "./pages/NotFoundPage";
+import CreateMenu from "./pages/CreateMenu";
 // Styles
 import "./index.css";
 import "./App.css";
@@ -69,6 +70,11 @@ const protectedRoutes = [
   {
     path: "/barista-dashboard",
     element: BaristaDashboard,
+    roles: ["Admin", "Barista"],
+  },
+  {
+    path: "/menu/management",
+    element: MenuManagement,
     roles: ["Admin", "Barista"],
   },
   {

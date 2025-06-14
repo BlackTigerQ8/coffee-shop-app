@@ -149,7 +149,7 @@ const Navbar = ({ cart }) => {
         {
           id: 5,
           title: t("create_menu"),
-          url: "/menu/create",
+          url: "/menu/dashboard",
           icon: <RestaurantMenuIcon />,
         }
       );
