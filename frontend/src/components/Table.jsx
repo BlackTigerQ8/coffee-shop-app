@@ -13,6 +13,7 @@ const Table = ({ columns, renderRow, data }) => {
                 className={`
                   p-4 text-left
                   ${col.className || ""}
+                   ${col.hideOnMobile ? "hidden md:table-cell" : ""}
                 `}
               >
                 {col.header}

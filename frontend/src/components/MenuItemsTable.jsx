@@ -9,16 +9,7 @@ import {
   Stack,
   Typography,
   Pagination,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Button,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  FormHelperText,
 } from "@mui/material";
 import {
   Search as SearchIcon,
@@ -27,6 +18,12 @@ import {
   Delete as DeleteIcon,
 } from "@mui/icons-material";
 import Table from "./Table";
+import Form from "./Form";
+import StyledDialog, {
+  StyledDialogContent,
+  StyledDialogActions,
+} from "./StyledDialog";
+import { getMenuItemFormConfig } from "./formConfigs";
 import {
   createMenuItem,
   updateMenuItem,
@@ -35,129 +32,8 @@ import {
 } from "../redux/menuSlice";
 import CardImg from "../assets/card.jpg";
 
-// Menu Item Form Component
-const MenuItemForm = ({ item, categories, onSubmit, onCancel }) => {
-  const { t } = useTranslation();
-  const [formData, setFormData] = useState({
-    name: item?.name || "",
-    description: item?.description || "",
-    price: item?.price || "",
-    category:
-      typeof item?.category === "object"
-        ? item?.category?._id || ""
-        : item?.category || "",
-    image: null,
-  });
-  const [errors, setErrors] = useState({});
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
-
-  const handleImageChange = (e) => {
-    setFormData({ ...formData, image: e.target.files[0] });
-  };
-
-  const validateForm = () => {
-    const newErrors = {};
-    if (!formData.name) newErrors.name = t("name_required");
-    if (!formData.description)
-      newErrors.description = t("description_required");
-    if (!formData.price) newErrors.price = t("price_required");
-    if (!formData.category) newErrors.category = t("category_required");
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (validateForm()) {
-      const menuItemData = new FormData();
-      menuItemData.append("name", formData.name);
-      menuItemData.append("description", formData.description);
-      menuItemData.append("price", formData.price);
-      menuItemData.append("category", formData.category);
-      if (formData.image) {
-        menuItemData.append("image", formData.image);
-      }
-      onSubmit(menuItemData, item?._id);
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit}>
-      <TextField
-        fullWidth
-        margin="normal"
-        label={t("name")}
-        name="name"
-        value={formData.name}
-        onChange={handleChange}
-        error={!!errors.name}
-        helperText={errors.name}
-      />
-      <TextField
-        fullWidth
-        margin="normal"
-        label={t("description")}
-        name="description"
-        value={formData.description}
-        onChange={handleChange}
-        multiline
-        rows={3}
-        error={!!errors.description}
-        helperText={errors.description}
-      />
-      <TextField
-        fullWidth
-        margin="normal"
-        label={t("price")}
-        name="price"
-        type="number"
-        value={formData.price}
-        onChange={handleChange}
-        error={!!errors.price}
-        helperText={errors.price}
-        InputProps={{ inputProps: { min: 0, step: 0.01 } }}
-      />
-      <FormControl fullWidth margin="normal" error={!!errors.category}>
-        <InputLabel>{t("category")}</InputLabel>
-        <Select
-          name="category"
-          value={formData.category}
-          onChange={handleChange}
-          label={t("category")}
-        >
-          {categories.map((category) => (
-            <MenuItem key={category._id} value={category._id}>
-              {category.name}
-            </MenuItem>
-          ))}
-        </Select>
-        {errors.category && <FormHelperText>{errors.category}</FormHelperText>}
-      </FormControl>
-      <TextField
-        fullWidth
-        margin="normal"
-        type="file"
-        inputProps={{ accept: "image/*" }}
-        onChange={handleImageChange}
-        helperText={t("select_image")}
-      />
-      <DialogActions>
-        <Button onClick={onCancel}>{t("cancel")}</Button>
-        <Button type="submit" variant="contained" color="primary">
-          {item ? t("update") : t("add")}
-        </Button>
-      </DialogActions>
-    </form>
-  );
-};
-
 const MenuItemsTable = React.forwardRef(
-  ({ menuItems, categories, setIsLoading }, ref) => {
+  ({ menuItems = [], categories = [], setIsLoading }, ref) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
     const [search, setSearch] = useState("");
@@ -246,6 +122,25 @@ const MenuItemsTable = React.forwardRef(
       }
     };
 
+    // Prepare form data for editing
+    const getInitialFormData = (item) => {
+      if (!item) return {};
+
+      return {
+        _id: item?._id,
+        name: item.name || "",
+        description: item.description || "",
+        price: item.price || "",
+        category:
+          typeof item.category === "object"
+            ? item.category?._id
+            : item.category || "",
+      };
+    };
+
+    // Get form configuration
+    const formConfig = getMenuItemFormConfig(categories, t);
+
     const handleDeleteConfirm = async () => {
       if (itemToDelete) {
         await dispatch(deleteMenuItem(itemToDelete._id));
@@ -256,9 +151,9 @@ const MenuItemsTable = React.forwardRef(
 
     // Table columns
     const columns = [
-      { header: t("image"), accessor: "image" },
+      { header: t("image"), accessor: "image", hideOnMobile: true },
       { header: t("name"), accessor: "name" },
-      { header: t("description"), accessor: "description" },
+      { header: t("description"), accessor: "description", hideOnMobile: true },
       { header: t("price"), accessor: "price" },
       { header: t("category"), accessor: "category" },
       { header: t("actions"), accessor: "actions", className: "w-1/4" },
@@ -270,7 +165,7 @@ const MenuItemsTable = React.forwardRef(
         key={item._id}
         className="border-b border-gray-700 hover:bg-[#8b73585d] group"
       >
-        <td className="p-4">
+        <td className="p-4 hidden md:table-cell">
           <img
             src={`${API_URL}/${item.image}`}
             alt={item.name}
@@ -280,11 +175,13 @@ const MenuItemsTable = React.forwardRef(
               e.target.onerror = null;
               e.target.src = CardImg;
             }}
-            className="w-12 h-12 object-cover rounded"
+            className="w-12 h-12 object-cover rounded "
           />
         </td>
         <td className="p-4 text-dark">{item.name}</td>
-        <td className="p-4 text-dark">{item.description}</td>
+        <td className="p-4 text-dark hidden md:table-cell">
+          {item.description}
+        </td>
         <td className="p-4 text-dark">{item.price.toFixed(3)}KWD</td>
         <td className="p-4 text-dark">
           {item.category?.name || "No Category"}
@@ -392,52 +289,65 @@ const MenuItemsTable = React.forwardRef(
         </Stack>
 
         {/* Add/Edit Dialog */}
-        <Dialog
+        <StyledDialog
           open={modalOpen}
           onClose={() => setModalOpen(false)}
+          title={currentItem ? t("edit_menu_item") : t("add_menu_item")}
           maxWidth="md"
           fullWidth
         >
-          <DialogTitle>
-            {currentItem ? t("edit_menu_item") : t("add_menu_item")}
-          </DialogTitle>
-          <DialogContent>
-            <MenuItemForm
-              item={currentItem}
-              categories={categories}
+          <StyledDialogContent>
+            <Form
+              {...formConfig}
+              initialValues={getInitialFormData(currentItem)}
               onSubmit={handleSubmit}
               onCancel={() => setModalOpen(false)}
+              isEdit={!!currentItem}
             />
-          </DialogContent>
-        </Dialog>
+          </StyledDialogContent>
+        </StyledDialog>
 
         {/* Delete Confirmation Dialog */}
-        <Dialog
+        <StyledDialog
           open={deleteDialogOpen}
           onClose={() => setDeleteDialogOpen(false)}
+          title={t("confirm_delete")}
+          maxWidth="sm"
         >
-          <DialogTitle>{t("confirm_delete")}</DialogTitle>
-          <DialogContent>
-            <Typography>
+          <StyledDialogContent>
+            <Typography sx={{ color: "#33211D", mb: 2 }}>
               {t("delete_confirmation_message", {
                 item: itemToDelete?.name,
                 type: t("menu_item"),
               })}
             </Typography>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setDeleteDialogOpen(false)}>
+          </StyledDialogContent>
+          <StyledDialogActions>
+            <Button
+              onClick={() => setDeleteDialogOpen(false)}
+              sx={{
+                color: "#33211D",
+                "&:hover": {
+                  backgroundColor: "rgba(255, 248, 240, 0.1)",
+                },
+              }}
+            >
               {t("cancel")}
             </Button>
             <Button
               onClick={handleDeleteConfirm}
-              color="error"
-              variant="contained"
+              sx={{
+                backgroundColor: "#dc3545",
+                color: "#FFF8F0",
+                "&:hover": {
+                  backgroundColor: "#c82333",
+                },
+              }}
             >
               {t("delete")}
             </Button>
-          </DialogActions>
-        </Dialog>
+          </StyledDialogActions>
+        </StyledDialog>
       </>
     );
   }

@@ -1,4 +1,4 @@
-import i18n, { changeLanguage } from "i18next";
+import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 
@@ -199,6 +199,46 @@ i18n
           categories: "Categories",
           manage_menu: "Manage Menu",
           filtered_from: "Filtered from",
+
+          ///STORAGE/RESOURCES///
+          storage: "Storage",
+          resources: "Resources",
+          resource_name: "Resource Name",
+          current_stock: "Current Stock",
+          minimum_stock: "Minimum Stock",
+          cost_per_unit: "Cost Per Unit",
+          supplier: "Supplier",
+          unit: "Unit",
+          search_resources: "Search Resources",
+          add_resource: "Add Resource",
+          edit_resource: "Edit Resource",
+          delete_resource: "Delete Resource",
+          restock: "Restock",
+          restock_resource: "Restock Resource",
+          quantity_to_add: "Quantity to Add",
+          low_stock: "Low Stock",
+          in_stock: "In Stock",
+          low_stock_alert: "{{count}} resources are running low on stock",
+          filter_by_category: "Filter by Category",
+          all_categories: "All Categories",
+
+          ///VALIDATION MESSAGES///
+          description_required: "Description is required",
+          price_required: "Price is required",
+          category_required: "Category is required",
+          current_stock_required: "Current stock is required",
+          minimum_stock_required: "Minimum stock is required",
+          cost_per_unit_required: "Cost per unit is required",
+          unit_required: "Unit is required",
+          quantity_required: "Quantity is required",
+
+          ///DIALOG MESSAGES///
+          confirm_delete: "Confirm Delete",
+          delete_confirmation_message:
+            "Are you sure you want to delete {{item}} {{type}}?",
+          menu_item: "menu item",
+          resource: "resource",
+          item_price_valid_number: "Price must be a valid number",
 
           ///CART///
           cart_subtitle: "Review your selected items and proceed to checkout",
@@ -428,6 +468,45 @@ i18n
           categories: "الأقسام",
           manage_menu: "إدارة القائمة",
           filtered_from: "تصفية من",
+
+          ///STORAGE/RESOURCES///
+          storage: "المخزن",
+          resources: "الموارد",
+          resource_name: "اسم المورد",
+          current_stock: "المخزون الحالي",
+          minimum_stock: "الحد الأدنى للمخزون",
+          cost_per_unit: "التكلفة لكل وحدة",
+          supplier: "المورد",
+          unit: "الوحدة",
+          search_resources: "بحث عن الموارد",
+          add_resource: "إضافة مورد",
+          edit_resource: "تعديل المورد",
+          delete_resource: "حذف المورد",
+          restock: "إعادة التخزين",
+          restock_resource: "إعادة تخزين المورد",
+          quantity_to_add: "الكمية المراد إضافتها",
+          low_stock: "مخزون منخفض",
+          in_stock: "متوفر في المخزون",
+          low_stock_alert: "{{count}} من الموارد لديها مخزون منخفض",
+          filter_by_category: "تصفية حسب الفئة",
+          all_categories: "جميع الفئات",
+
+          ///VALIDATION MESSAGES///
+          description_required: "الوصف مطلوب",
+          price_required: "السعر مطلوب",
+          category_required: "الفئة مطلوبة",
+          current_stock_required: "المخزون الحالي مطلوب",
+          minimum_stock_required: "الحد الأدنى للمخزون مطلوب",
+          cost_per_unit_required: "التكلفة لكل وحدة مطلوبة",
+          unit_required: "الوحدة مطلوبة",
+          quantity_required: "الكمية مطلوبة",
+
+          ///DIALOG MESSAGES///
+          confirm_delete: "تأكيد الحذف",
+          delete_confirmation_message: "هل أنت متأكد من حذف {{item}} {{type}}؟",
+          menu_item: "عنصر القائمة",
+          resource: "المورد",
+          item_price_valid_number: "السعر يجب أن يكون رقم صالح",
 
           ///CART///
           cart_subtitle: "استعرض عناصر السلة واستمر في الدفع",

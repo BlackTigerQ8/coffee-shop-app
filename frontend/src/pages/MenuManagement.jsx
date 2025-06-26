@@ -10,6 +10,7 @@ import { fetchResources } from "../redux/resourceSlice";
 import Backdrop from "../components/Backdrop";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import ErrorBoundary from "../components/ErrorBoundary";
 import MenuItemsTable from "../components/MenuItemsTable";
 import CategoriesTable from "../components/CategoriesTable";
 import ResourcesTable from "../components/ResourcesTable";
@@ -106,7 +107,13 @@ const MenuManagement = () => {
             onChange={handleTabChange}
             sx={{
               "& .MuiTab-root": { color: "#DA9F5B" },
-              "& .Mui-selected": { color: "#FFF8F0" },
+              "& .Mui-selected": {
+                color: "#33211D !important",
+                fontWeight: "bold",
+              },
+              "& .MuiTabs-indicator": {
+                backgroundColor: "#DA9F5B",
+              },
             }}
           >
             <Tab label={t("menu_items")} />
@@ -131,28 +138,34 @@ const MenuManagement = () => {
 
         {/* Tab Content */}
         {tabValue === 0 && (
-          <MenuItemsTable
-            ref={menuItemsTableRef}
-            menuItems={menuItems}
-            categories={categories}
-            setIsLoading={setIsLoading}
-          />
+          <ErrorBoundary>
+            <MenuItemsTable
+              ref={menuItemsTableRef}
+              menuItems={menuItems || []}
+              categories={categories || []}
+              setIsLoading={setIsLoading}
+            />
+          </ErrorBoundary>
         )}
 
         {tabValue === 1 && (
-          <CategoriesTable
-            ref={categoriesTableRef}
-            categories={categories}
-            setIsLoading={setIsLoading}
-          />
+          <ErrorBoundary>
+            <CategoriesTable
+              ref={categoriesTableRef}
+              categories={categories || []}
+              setIsLoading={setIsLoading}
+            />
+          </ErrorBoundary>
         )}
 
         {tabValue === 2 && (
-          <ResourcesTable
-            ref={resourcesTableRef}
-            categories={categories}
-            setIsLoading={setIsLoading}
-          />
+          <ErrorBoundary>
+            <ResourcesTable
+              ref={resourcesTableRef}
+              categories={categories || []}
+              setIsLoading={setIsLoading}
+            />
+          </ErrorBoundary>
         )}
       </div>
 

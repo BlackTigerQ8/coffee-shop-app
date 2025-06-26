@@ -66,9 +66,16 @@ export const fetchResourcesForMenuCategory = createAsyncThunk(
 
 export const createResource = createAsyncThunk(
   "resource/createResource",
-  async (resourceData, { rejectWithValue }) => {
+  async (resourceData, { rejectWithValue, getState }) => {
     try {
-      const response = await axios.post(`${API_URL}/resources`, resourceData);
+      const { token } = getState().user;
+
+      const response = await axios.post(`${API_URL}/resources`, resourceData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response.data);
@@ -78,11 +85,19 @@ export const createResource = createAsyncThunk(
 
 export const updateResource = createAsyncThunk(
   "resource/updateResource",
-  async ({ id, resourceData }, { rejectWithValue }) => {
+  async ({ id, resourceData }, { rejectWithValue, getState }) => {
     try {
+      const { token } = getState().user;
+
       const response = await axios.put(
         `${API_URL}/resources/${id}`,
-        resourceData
+        resourceData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
       );
       return response.data;
     } catch (error) {
@@ -93,9 +108,15 @@ export const updateResource = createAsyncThunk(
 
 export const deleteResource = createAsyncThunk(
   "resource/deleteResource",
-  async (id, { rejectWithValue }) => {
+  async (id, { rejectWithValue, getState }) => {
     try {
-      await axios.delete(`${API_URL}/resources/${id}`);
+      const { token } = getState().user;
+
+      await axios.delete(`${API_URL}/resources/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       return id;
     } catch (error) {
       return rejectWithValue(error.response.data);
@@ -105,11 +126,22 @@ export const deleteResource = createAsyncThunk(
 
 export const restockResource = createAsyncThunk(
   "resource/restockResource",
-  async ({ id, quantity }, { rejectWithValue }) => {
+  async ({ id, quantity }, { rejectWithValue, getState }) => {
     try {
-      const response = await axios.patch(`${API_URL}/resources/${id}/restock`, {
-        quantity,
-      });
+      const { token } = getState().user;
+
+      const response = await axios.patch(
+        `${API_URL}/resources/${id}/restock`,
+        {
+          quantity,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response.data);

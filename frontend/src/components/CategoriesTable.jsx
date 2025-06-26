@@ -9,10 +9,6 @@ import {
   Stack,
   Typography,
   Pagination,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Button,
 } from "@mui/material";
 import {
@@ -22,6 +18,12 @@ import {
   Delete as DeleteIcon,
 } from "@mui/icons-material";
 import Table from "./Table";
+import Form from "./Form";
+import StyledDialog, {
+  StyledDialogContent,
+  StyledDialogActions,
+} from "./StyledDialog";
+import { getCategoryFormConfig } from "./formConfigs";
 import {
   createCategory,
   updateCategory,
@@ -29,44 +31,8 @@ import {
   fetchCategories,
 } from "../redux/categorySlice";
 
-// Category Form Component
-const CategoryForm = ({ category, onSubmit, onCancel }) => {
-  const { t } = useTranslation();
-  const [name, setName] = useState(category?.name || "");
-  const [error, setError] = useState("");
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!name.trim()) {
-      setError(t("name_required"));
-      return;
-    }
-    onSubmit({ name }, category?._id);
-  };
-
-  return (
-    <form onSubmit={handleSubmit}>
-      <TextField
-        fullWidth
-        margin="normal"
-        label={t("name")}
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        error={!!error}
-        helperText={error}
-      />
-      <DialogActions>
-        <Button onClick={onCancel}>{t("cancel")}</Button>
-        <Button type="submit" variant="contained" color="primary">
-          {category ? t("update") : t("add")}
-        </Button>
-      </DialogActions>
-    </form>
-  );
-};
-
 const CategoriesTable = React.forwardRef(
-  ({ categories, setIsLoading }, ref) => {
+  ({ categories = [], setIsLoading }, ref) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
     const [search, setSearch] = useState("");
@@ -155,6 +121,18 @@ const CategoriesTable = React.forwardRef(
         setCategoryToDelete(null);
       }
     };
+
+    // Prepare form data for editing
+    const getInitialFormData = (category) => {
+      if (!category) return {};
+      return {
+        _id: category?._id,
+        name: category.name || "",
+      };
+    };
+
+    // Get form configuration
+    const formConfig = getCategoryFormConfig(t);
 
     // Table columns
     const columns = [
@@ -272,51 +250,65 @@ const CategoriesTable = React.forwardRef(
         </Stack>
 
         {/* Add/Edit Dialog */}
-        <Dialog
+        <StyledDialog
           open={modalOpen}
           onClose={() => setModalOpen(false)}
+          title={currentCategory ? t("edit_category") : t("add_category")}
           maxWidth="sm"
           fullWidth
         >
-          <DialogTitle>
-            {currentCategory ? t("edit_category") : t("add_category")}
-          </DialogTitle>
-          <DialogContent>
-            <CategoryForm
-              category={currentCategory}
+          <StyledDialogContent>
+            <Form
+              {...formConfig}
+              initialValues={getInitialFormData(currentCategory)}
               onSubmit={handleSubmit}
               onCancel={() => setModalOpen(false)}
+              isEdit={!!currentCategory}
             />
-          </DialogContent>
-        </Dialog>
+          </StyledDialogContent>
+        </StyledDialog>
 
         {/* Delete Confirmation Dialog */}
-        <Dialog
+        <StyledDialog
           open={deleteDialogOpen}
           onClose={() => setDeleteDialogOpen(false)}
+          title={t("confirm_delete")}
+          maxWidth="sm"
         >
-          <DialogTitle>{t("confirm_delete")}</DialogTitle>
-          <DialogContent>
-            <Typography>
+          <StyledDialogContent>
+            <Typography sx={{ color: "#33211D", mb: 2 }}>
               {t("delete_confirmation_message", {
                 item: categoryToDelete?.name,
                 type: t("category"),
               })}
             </Typography>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setDeleteDialogOpen(false)}>
+          </StyledDialogContent>
+          <StyledDialogActions>
+            <Button
+              onClick={() => setDeleteDialogOpen(false)}
+              sx={{
+                color: "#33211D",
+                "&:hover": {
+                  backgroundColor: "rgba(51, 33, 29, 0.1)",
+                },
+              }}
+            >
               {t("cancel")}
             </Button>
             <Button
               onClick={handleDeleteConfirm}
-              color="error"
-              variant="contained"
+              sx={{
+                backgroundColor: "#d32f2f",
+                color: "white",
+                "&:hover": {
+                  backgroundColor: "#b71c1c",
+                },
+              }}
             >
               {t("delete")}
             </Button>
-          </DialogActions>
-        </Dialog>
+          </StyledDialogActions>
+        </StyledDialog>
       </>
     );
   }
