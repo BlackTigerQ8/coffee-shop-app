@@ -1,8 +1,8 @@
 const mongoose = require("mongoose");
-const bcrypt = require("bcryptjs");
 const { User } = require("./models/userModel");
 const MenuItem = require("./models/menuModel");
 const Category = require("./models/categoryModel");
+const Resource = require("./models/resourceModel");
 const connectDB = require("./config/db.js");
 
 // Categories data
@@ -16,69 +16,169 @@ const categoriesData = [
   { name: "Breakfast" },
   { name: "Light Meals" },
   { name: "Snacks" },
+  { name: "Ingredients & Resources" },
 ];
 
-const createCategoriesAndMenuItems = async () => {
+// Resources data
+const resourcesData = [
+  {
+    name: "Coffee Beans (Espresso Blend)",
+    unit: "g",
+    currentStock: 5000,
+    minimumStock: 1000,
+    costPerUnit: 0.04,
+    supplier: "Premium Coffee Suppliers",
+  },
+  {
+    name: "Milk",
+    unit: "ml",
+    currentStock: 10000,
+    minimumStock: 2000,
+    costPerUnit: 0.003,
+    supplier: "Local Dairy",
+  },
+  {
+    name: "Chocolate Syrup",
+    unit: "ml",
+    currentStock: 2000,
+    minimumStock: 500,
+    costPerUnit: 0.02,
+    supplier: "Sweet Supplies Co",
+  },
+  {
+    name: "Caramel Syrup",
+    unit: "ml",
+    currentStock: 2000,
+    minimumStock: 500,
+    costPerUnit: 0.02,
+    supplier: "Sweet Supplies Co",
+  },
+  {
+    name: "Vanilla Syrup",
+    unit: "ml",
+    currentStock: 2000,
+    minimumStock: 500,
+    costPerUnit: 0.02,
+    supplier: "Sweet Supplies Co",
+  },
+  {
+    name: "Whipped Cream",
+    unit: "g",
+    currentStock: 1000,
+    minimumStock: 200,
+    costPerUnit: 0.01,
+    supplier: "Local Dairy",
+  },
+  {
+    name: "Tea Bags (Earl Grey)",
+    unit: "pieces",
+    currentStock: 200,
+    minimumStock: 50,
+    costPerUnit: 0.25,
+    supplier: "Tea Traders Inc",
+  },
+  {
+    name: "Tea Bags (Green Tea)",
+    unit: "pieces",
+    currentStock: 200,
+    minimumStock: 50,
+    costPerUnit: 0.25,
+    supplier: "Tea Traders Inc",
+  },
+  {
+    name: "Ice",
+    unit: "g",
+    currentStock: 5000,
+    minimumStock: 1000,
+    costPerUnit: 0.001,
+    supplier: "In-house",
+  },
+  {
+    name: "Croissant Dough",
+    unit: "g",
+    currentStock: 3000,
+    minimumStock: 1000,
+    costPerUnit: 0.015,
+    supplier: "Bakery Supplies Ltd",
+  },
+  {
+    name: "Bagels",
+    unit: "pieces",
+    currentStock: 50,
+    minimumStock: 20,
+    costPerUnit: 1.2,
+    supplier: "Local Bakery",
+  },
+  {
+    name: "Bread (Sourdough)",
+    unit: "pieces",
+    currentStock: 100,
+    minimumStock: 40,
+    costPerUnit: 0.3,
+    supplier: "Local Bakery",
+  },
+  {
+    name: "Eggs",
+    unit: "pieces",
+    currentStock: 120,
+    minimumStock: 50,
+    costPerUnit: 0.35,
+    supplier: "Local Farm",
+  },
+  {
+    name: "Bacon",
+    unit: "g",
+    currentStock: 2000,
+    minimumStock: 500,
+    costPerUnit: 0.08,
+    supplier: "Local Butcher",
+  },
+  {
+    name: "Avocado",
+    unit: "pieces",
+    currentStock: 30,
+    minimumStock: 10,
+    costPerUnit: 1.5,
+    supplier: "Local Produce",
+  },
+];
+
+const createCategoriesResourcesAndMenuItems = async () => {
   try {
     console.log("=".repeat(50));
     console.log("STARTING SEEDER PROCESS");
     console.log("=".repeat(50));
 
-    // Check existing data
-    const existingCategories = await Category.find();
-    const existingMenuItems = await MenuItem.find();
-
-    console.log(`📊 Current Database Status:`);
-    console.log(`   • Existing Categories: ${existingCategories.length}`);
-    console.log(`   • Existing Menu Items: ${existingMenuItems.length}`);
-
-    if (existingCategories.length > 0 || existingMenuItems.length > 0) {
-      console.log("\n🧹 Clearing existing data...");
-      await MenuItem.deleteMany({});
-      await Category.deleteMany({});
-      console.log("✅ Database cleared!");
-    }
+    // Check and clear existing data
+    await MenuItem.deleteMany({});
+    await Category.deleteMany({});
+    await Resource.deleteMany({});
 
     console.log("\n📁 Creating Categories...");
-    console.log("-".repeat(30));
+    const createdCategories = await Category.insertMany(categoriesData);
 
-    // Create categories one by one with logging
-    const createdCategories = [];
-    for (let i = 0; i < categoriesData.length; i++) {
-      const categoryData = categoriesData[i];
-      try {
-        const newCategory = new Category(categoryData);
-        const savedCategory = await newCategory.save();
-        createdCategories.push(savedCategory);
-        console.log(
-          `✅ Category ${i + 1}/${categoriesData.length}: "${
-            savedCategory.name
-          }" created (ID: ${savedCategory._id})`
-        );
-      } catch (error) {
-        console.error(
-          `❌ Error creating category "${categoryData.name}":`,
-          error.message
-        );
-      }
-    }
-
-    console.log(
-      `\n🎉 Successfully created ${createdCategories.length} categories!`
-    );
-
-    // Create a map for easy category lookup
+    // Create category map
     const categoryMap = {};
     createdCategories.forEach((cat) => {
       categoryMap[cat.name] = cat._id;
     });
 
-    console.log("\n📋 Category Map:");
-    Object.entries(categoryMap).forEach(([name, id]) => {
-      console.log(`   "${name}" -> ${id}`);
+    console.log("\n📦 Creating Resources...");
+    // Add category to resources
+    const resourcesWithCategory = resourcesData.map((resource) => ({
+      ...resource,
+      category: categoryMap["Ingredients & Resources"],
+    }));
+
+    const createdResources = await Resource.insertMany(resourcesWithCategory);
+
+    // Create resource map for easy reference
+    const resourceMap = {};
+    createdResources.forEach((resource) => {
+      resourceMap[resource.name] = resource._id;
     });
 
-    // Menu items data
+    // Menu items data with ingredients
     const menuItemsData = [
       // Hot Coffee
       {
@@ -87,14 +187,41 @@ const createCategoriesAndMenuItems = async () => {
         price: 2.5,
         category: categoryMap["Hot Coffee"],
         image: "uploads/espresso.jpg",
+        preparationTime: 3,
+        ingredients: [
+          {
+            resource: resourceMap["Coffee Beans (Espresso Blend)"],
+            quantity: 18,
+          },
+        ],
+      },
+      {
+        name: "Double Espresso",
+        description: "Two shots of rich espresso for extra strength",
+        price: 3.5,
+        category: categoryMap["Hot Coffee"],
+        image: "uploads/double-espresso.jpg",
+        preparationTime: 4,
+        ingredients: [
+          {
+            resource: resourceMap["Coffee Beans (Espresso Blend)"],
+            quantity: 36,
+          },
+        ],
       },
       {
         name: "Americano",
-        description:
-          "Espresso shots topped with hot water for a clean, crisp taste",
-        price: 3.25,
+        description: "Espresso with hot water for a smooth, rich taste",
+        price: 3.0,
         category: categoryMap["Hot Coffee"],
         image: "uploads/americano.jpg",
+        preparationTime: 4,
+        ingredients: [
+          {
+            resource: resourceMap["Coffee Beans (Espresso Blend)"],
+            quantity: 18,
+          },
+        ],
       },
       {
         name: "Cappuccino",
@@ -102,21 +229,35 @@ const createCategoriesAndMenuItems = async () => {
         price: 4.5,
         category: categoryMap["Hot Coffee"],
         image: "uploads/cappuccino.jpg",
+        preparationTime: 5,
+        ingredients: [
+          {
+            resource: resourceMap["Coffee Beans (Espresso Blend)"],
+            quantity: 18,
+          },
+          {
+            resource: resourceMap["Milk"],
+            quantity: 180,
+          },
+        ],
       },
       {
         name: "Latte",
-        description:
-          "Smooth espresso with steamed milk and a light layer of foam",
+        description: "Smooth espresso with velvety steamed milk",
         price: 4.75,
         category: categoryMap["Hot Coffee"],
         image: "uploads/latte.jpg",
-      },
-      {
-        name: "Macchiato",
-        description: "Espresso 'marked' with a dollop of foamed milk",
-        price: 4.25,
-        category: categoryMap["Hot Coffee"],
-        image: "uploads/macchiato.jpg",
+        preparationTime: 5,
+        ingredients: [
+          {
+            resource: resourceMap["Coffee Beans (Espresso Blend)"],
+            quantity: 18,
+          },
+          {
+            resource: resourceMap["Milk"],
+            quantity: 240,
+          },
+        ],
       },
       {
         name: "Mocha",
@@ -125,397 +266,519 @@ const createCategoriesAndMenuItems = async () => {
         price: 5.25,
         category: categoryMap["Hot Coffee"],
         image: "uploads/mocha.jpg",
+        preparationTime: 6,
+        ingredients: [
+          {
+            resource: resourceMap["Coffee Beans (Espresso Blend)"],
+            quantity: 18,
+          },
+          {
+            resource: resourceMap["Milk"],
+            quantity: 180,
+          },
+          {
+            resource: resourceMap["Chocolate Syrup"],
+            quantity: 30,
+          },
+          {
+            resource: resourceMap["Whipped Cream"],
+            quantity: 30,
+          },
+        ],
       },
       {
-        name: "French Press",
+        name: "Caramel Macchiato",
         description:
-          "Full-bodied coffee brewed with coarse grounds for 4 minutes",
-        price: 3.75,
+          "Espresso with vanilla syrup, steamed milk, and caramel drizzle",
+        price: 5.5,
         category: categoryMap["Hot Coffee"],
-        image: "uploads/french-press.jpg",
+        image: "uploads/caramel-macchiato.jpg",
+        preparationTime: 6,
+        ingredients: [
+          {
+            resource: resourceMap["Coffee Beans (Espresso Blend)"],
+            quantity: 18,
+          },
+          {
+            resource: resourceMap["Milk"],
+            quantity: 240,
+          },
+          {
+            resource: resourceMap["Vanilla Syrup"],
+            quantity: 15,
+          },
+          {
+            resource: resourceMap["Caramel Syrup"],
+            quantity: 15,
+          },
+        ],
       },
       {
-        name: "Turkish Coffee",
-        description: "Traditional finely ground coffee brewed in a cezve",
-        price: 4.0,
+        name: "Flat White",
+        description: "Strong espresso with microfoam for a velvety texture",
+        price: 4.75,
         category: categoryMap["Hot Coffee"],
-        image: "uploads/turkish-coffee.jpg",
+        image: "uploads/flat-white.jpg",
+        preparationTime: 5,
+        ingredients: [
+          {
+            resource: resourceMap["Coffee Beans (Espresso Blend)"],
+            quantity: 36,
+          },
+          {
+            resource: resourceMap["Milk"],
+            quantity: 180,
+          },
+        ],
       },
 
       // Cold Coffee
       {
         name: "Iced Coffee",
-        description: "Refreshing cold brew served over ice",
-        price: 3.5,
+        description: "Chilled coffee served over ice with milk",
+        price: 4.0,
         category: categoryMap["Cold Coffee"],
         image: "uploads/iced-coffee.jpg",
-      },
-      {
-        name: "Cold Brew",
-        description: "Smooth, low-acid coffee steeped for 12 hours",
-        price: 4.25,
-        category: categoryMap["Cold Coffee"],
-        image: "uploads/cold-brew.jpg",
+        preparationTime: 4,
+        ingredients: [
+          {
+            resource: resourceMap["Coffee Beans (Espresso Blend)"],
+            quantity: 18,
+          },
+          {
+            resource: resourceMap["Milk"],
+            quantity: 120,
+          },
+          {
+            resource: resourceMap["Ice"],
+            quantity: 200,
+          },
+        ],
       },
       {
         name: "Iced Latte",
-        description: "Espresso and cold milk served over ice",
-        price: 4.95,
+        description: "Espresso with cold milk over ice",
+        price: 4.75,
         category: categoryMap["Cold Coffee"],
         image: "uploads/iced-latte.jpg",
+        preparationTime: 4,
+        ingredients: [
+          {
+            resource: resourceMap["Coffee Beans (Espresso Blend)"],
+            quantity: 36,
+          },
+          {
+            resource: resourceMap["Milk"],
+            quantity: 240,
+          },
+          {
+            resource: resourceMap["Ice"],
+            quantity: 200,
+          },
+        ],
       },
       {
-        name: "Iced Caramel Macchiato",
+        name: "Iced Mocha",
         description:
-          "Vanilla syrup, milk, espresso, and caramel drizzle over ice",
-        price: 5.75,
+          "Chocolate, espresso and milk served over ice, topped with whipped cream",
+        price: 5.5,
         category: categoryMap["Cold Coffee"],
-        image: "uploads/iced-caramel-macchiato.jpg",
+        image: "uploads/iced-mocha.jpg",
+        preparationTime: 5,
+        ingredients: [
+          {
+            resource: resourceMap["Coffee Beans (Espresso Blend)"],
+            quantity: 36,
+          },
+          {
+            resource: resourceMap["Milk"],
+            quantity: 240,
+          },
+          {
+            resource: resourceMap["Chocolate Syrup"],
+            quantity: 30,
+          },
+          {
+            resource: resourceMap["Whipped Cream"],
+            quantity: 30,
+          },
+          {
+            resource: resourceMap["Ice"],
+            quantity: 200,
+          },
+        ],
+      },
+      {
+        name: "Cold Brew",
+        description: "Smooth, slow-steeped cold coffee",
+        price: 4.5,
+        category: categoryMap["Cold Coffee"],
+        image: "uploads/cold-brew.jpg",
+        preparationTime: 2, // Pre-made, just needs to be served
+        ingredients: [
+          {
+            resource: resourceMap["Coffee Beans (Espresso Blend)"],
+            quantity: 50, // More beans used due to extraction method
+          },
+          {
+            resource: resourceMap["Ice"],
+            quantity: 200,
+          },
+        ],
       },
       {
         name: "Frappé",
-        description:
-          "Blended iced coffee with milk and topped with whipped cream",
-        price: 5.5,
+        description: "Blended iced coffee drink with milk and sweetener",
+        price: 5.75,
         category: categoryMap["Cold Coffee"],
         image: "uploads/frappe.jpg",
-      },
-      {
-        name: "Nitro Cold Brew",
-        description: "Cold brew infused with nitrogen for a creamy texture",
-        price: 4.75,
-        category: categoryMap["Cold Coffee"],
-        image: "uploads/nitro-cold-brew.jpg",
+        preparationTime: 7,
+        ingredients: [
+          {
+            resource: resourceMap["Coffee Beans (Espresso Blend)"],
+            quantity: 36,
+          },
+          {
+            resource: resourceMap["Milk"],
+            quantity: 240,
+          },
+          {
+            resource: resourceMap["Ice"],
+            quantity: 300,
+          },
+          {
+            resource: resourceMap["Vanilla Syrup"],
+            quantity: 20,
+          },
+          {
+            resource: resourceMap["Whipped Cream"],
+            quantity: 30,
+          },
+        ],
       },
 
       // Tea & Hot Beverages
       {
         name: "Earl Grey Tea",
-        description: "Classic black tea with bergamot oil",
-        price: 2.75,
+        description: "Classic black tea with bergamot flavor",
+        price: 3.0,
         category: categoryMap["Tea & Hot Beverages"],
         image: "uploads/earl-grey.jpg",
+        preparationTime: 4,
+        ingredients: [
+          {
+            resource: resourceMap["Tea Bags (Earl Grey)"],
+            quantity: 1,
+          },
+        ],
       },
       {
         name: "Green Tea",
-        description: "Light and refreshing antioxidant-rich tea",
-        price: 2.5,
+        description: "Light and refreshing Japanese green tea",
+        price: 3.0,
         category: categoryMap["Tea & Hot Beverages"],
         image: "uploads/green-tea.jpg",
-      },
-      {
-        name: "Chamomile Tea",
-        description: "Soothing herbal tea perfect for relaxation",
-        price: 2.75,
-        category: categoryMap["Tea & Hot Beverages"],
-        image: "uploads/chamomile-tea.jpg",
+        preparationTime: 4,
+        ingredients: [
+          {
+            resource: resourceMap["Tea Bags (Green Tea)"],
+            quantity: 1,
+          },
+        ],
       },
       {
         name: "Chai Latte",
-        description: "Spiced tea blend with steamed milk and warming spices",
-        price: 4.25,
+        description: "Spiced tea with steamed milk",
+        price: 4.5,
         category: categoryMap["Tea & Hot Beverages"],
         image: "uploads/chai-latte.jpg",
+        preparationTime: 5,
+        ingredients: [
+          {
+            resource: resourceMap["Tea Bags (Earl Grey)"],
+            quantity: 1,
+          },
+          {
+            resource: resourceMap["Milk"],
+            quantity: 240,
+          },
+          {
+            resource: resourceMap["Vanilla Syrup"],
+            quantity: 15,
+          },
+        ],
       },
       {
         name: "Hot Chocolate",
-        description: "Rich, creamy chocolate drink topped with whipped cream",
-        price: 3.95,
+        description: "Rich, creamy chocolate drink",
+        price: 4.25,
         category: categoryMap["Tea & Hot Beverages"],
         image: "uploads/hot-chocolate.jpg",
-      },
-      {
-        name: "Matcha Latte",
-        description: "Premium matcha powder with steamed milk",
-        price: 4.75,
-        category: categoryMap["Tea & Hot Beverages"],
-        image: "uploads/matcha-latte.jpg",
+        preparationTime: 5,
+        ingredients: [
+          {
+            resource: resourceMap["Milk"],
+            quantity: 240,
+          },
+          {
+            resource: resourceMap["Chocolate Syrup"],
+            quantity: 45,
+          },
+          {
+            resource: resourceMap["Whipped Cream"],
+            quantity: 30,
+          },
+        ],
       },
 
       // Cold Beverages
       {
         name: "Iced Tea",
-        description: "Refreshing black tea served over ice with lemon",
-        price: 2.95,
+        description: "Refreshing cold tea with lemon",
+        price: 3.5,
         category: categoryMap["Cold Beverages"],
         image: "uploads/iced-tea.jpg",
+        preparationTime: 2,
+        ingredients: [
+          {
+            resource: resourceMap["Tea Bags (Earl Grey)"],
+            quantity: 1,
+          },
+          {
+            resource: resourceMap["Ice"],
+            quantity: 300,
+          },
+        ],
       },
       {
         name: "Lemonade",
-        description: "Fresh squeezed lemons with a touch of sweetness",
-        price: 3.25,
+        description: "Homemade sweet and tangy lemonade",
+        price: 3.75,
         category: categoryMap["Cold Beverages"],
         image: "uploads/lemonade.jpg",
-      },
-      {
-        name: "Fruit Smoothie",
-        description: "Blended seasonal fruits with yogurt and honey",
-        price: 5.25,
-        category: categoryMap["Cold Beverages"],
-        image: "uploads/fruit-smoothie.jpg",
+        preparationTime: 3,
+        ingredients: [
+          {
+            resource: resourceMap["Ice"],
+            quantity: 300,
+          },
+        ],
       },
       {
         name: "Sparkling Water",
-        description: "Refreshing sparkling water with your choice of flavor",
-        price: 2.25,
+        description: "Refreshing carbonated water",
+        price: 2.5,
         category: categoryMap["Cold Beverages"],
         image: "uploads/sparkling-water.jpg",
-      },
-      {
-        name: "Fresh Orange Juice",
-        description: "100% fresh squeezed orange juice",
-        price: 4.5,
-        category: categoryMap["Cold Beverages"],
-        image: "uploads/orange-juice.jpg",
+        preparationTime: 1,
+        ingredients: [
+          {
+            resource: resourceMap["Ice"],
+            quantity: 200,
+          },
+        ],
       },
 
       // Pastries & Desserts
       {
         name: "Croissant",
-        description: "Buttery, flaky French pastry baked fresh daily",
-        price: 2.95,
-        category: categoryMap["Pastries & Desserts"],
-        image: "uploads/croissant.jpg",
-      },
-      {
-        name: "Chocolate Chip Muffin",
-        description: "Moist muffin loaded with chocolate chips",
-        price: 3.25,
-        category: categoryMap["Pastries & Desserts"],
-        image: "uploads/chocolate-chip-muffin.jpg",
-      },
-      {
-        name: "Blueberry Scone",
-        description: "Traditional English scone with fresh blueberries",
+        description: "Buttery, flaky French pastry",
         price: 3.5,
         category: categoryMap["Pastries & Desserts"],
-        image: "uploads/blueberry-scone.jpg",
+        image: "uploads/croissant.jpg",
+        preparationTime: 1, // Just needs to be served
+        ingredients: [
+          {
+            resource: resourceMap["Croissant Dough"],
+            quantity: 100,
+          },
+        ],
       },
       {
-        name: "Tiramisu",
-        description: "Classic Italian dessert with coffee-soaked ladyfingers",
-        price: 5.95,
+        name: "Chocolate Croissant",
+        description: "Flaky croissant with rich chocolate filling",
+        price: 4.0,
         category: categoryMap["Pastries & Desserts"],
-        image: "uploads/tiramisu.jpg",
+        image: "uploads/chocolate-croissant.jpg",
+        preparationTime: 1,
+        ingredients: [
+          {
+            resource: resourceMap["Croissant Dough"],
+            quantity: 100,
+          },
+          {
+            resource: resourceMap["Chocolate Syrup"],
+            quantity: 30,
+          },
+        ],
+      },
+      {
+        name: "Blueberry Muffin",
+        description: "Moist muffin packed with fresh blueberries",
+        price: 3.75,
+        category: categoryMap["Pastries & Desserts"],
+        image: "uploads/blueberry-muffin.jpg",
+        preparationTime: 1,
+        ingredients: [],
+      },
+      {
+        name: "Chocolate Chip Cookie",
+        description: "Classic cookie with melty chocolate chips",
+        price: 2.5,
+        category: categoryMap["Pastries & Desserts"],
+        image: "uploads/chocolate-chip-cookie.jpg",
+        preparationTime: 1,
+        ingredients: [],
       },
       {
         name: "Cheesecake Slice",
-        description: "Rich New York style cheesecake with berry compote",
-        price: 4.75,
+        description: "Creamy New York-style cheesecake",
+        price: 5.5,
         category: categoryMap["Pastries & Desserts"],
         image: "uploads/cheesecake.jpg",
-      },
-      {
-        name: "Danish Pastry",
-        description: "Flaky pastry with seasonal fruit or cream cheese filling",
-        price: 3.75,
-        category: categoryMap["Pastries & Desserts"],
-        image: "uploads/danish-pastry.jpg",
+        preparationTime: 1,
+        ingredients: [],
       },
 
       // Sandwiches & Wraps
       {
-        name: "Club Sandwich",
-        description:
-          "Turkey, bacon, lettuce, tomato, and mayo on toasted bread",
-        price: 8.95,
+        name: "Turkey & Swiss Sandwich",
+        description: "Sliced turkey with Swiss cheese on sourdough",
+        price: 7.5,
         category: categoryMap["Sandwiches & Wraps"],
-        image: "uploads/club-sandwich.jpg",
+        image: "uploads/turkey-sandwich.jpg",
+        preparationTime: 6,
+        ingredients: [
+          {
+            resource: resourceMap["Bread (Sourdough)"],
+            quantity: 2,
+          },
+        ],
       },
       {
-        name: "Grilled Cheese",
-        description: "Melted cheese on buttery grilled sourdough bread",
-        price: 6.5,
+        name: "Veggie Wrap",
+        description: "Fresh vegetables with hummus in a whole wheat wrap",
+        price: 7.0,
         category: categoryMap["Sandwiches & Wraps"],
-        image: "uploads/grilled-cheese.jpg",
+        image: "uploads/veggie-wrap.jpg",
+        preparationTime: 5,
+        ingredients: [],
       },
       {
         name: "Chicken Caesar Wrap",
-        description:
-          "Grilled chicken, romaine lettuce, parmesan, and caesar dressing",
-        price: 7.95,
+        description: "Grilled chicken with romaine and Caesar dressing",
+        price: 8.0,
         category: categoryMap["Sandwiches & Wraps"],
-        image: "uploads/chicken-caesar-wrap.jpg",
-      },
-      {
-        name: "Veggie Panini",
-        description: "Grilled vegetables with pesto and mozzarella on ciabatta",
-        price: 7.25,
-        category: categoryMap["Sandwiches & Wraps"],
-        image: "uploads/veggie-panini.jpg",
-      },
-      {
-        name: "BLT Sandwich",
-        description: "Crispy bacon, lettuce, and tomato on toasted bread",
-        price: 7.5,
-        category: categoryMap["Sandwiches & Wraps"],
-        image: "uploads/blt-sandwich.jpg",
+        image: "uploads/caesar-wrap.jpg",
+        preparationTime: 6,
+        ingredients: [],
       },
 
       // Breakfast
       {
         name: "Avocado Toast",
-        description:
-          "Smashed avocado on multigrain toast with everything seasoning",
-        price: 6.95,
-        category: categoryMap["Breakfast"],
-        image: "uploads/avocado-toast.jpg",
-      },
-      {
-        name: "Breakfast Burrito",
-        description:
-          "Scrambled errors, cheese, potatoes, and your choice of meat",
+        description: "Sourdough toast with smashed avocado and spices",
         price: 8.5,
         category: categoryMap["Breakfast"],
-        image: "uploads/breakfast-burrito.jpg",
+        image: "uploads/avocado-toast.jpg",
+        preparationTime: 7,
+        ingredients: [
+          {
+            resource: resourceMap["Bread (Sourdough)"],
+            quantity: 1,
+          },
+          {
+            resource: resourceMap["Avocado"],
+            quantity: 0.5,
+          },
+        ],
       },
       {
-        name: "Pancakes",
-        description: "Fluffy buttermilk pancakes served with maple syrup",
-        price: 7.95,
-        category: categoryMap["Breakfast"],
-        image: "uploads/pancakes.jpg",
-      },
-      {
-        name: "Eggs Benedict",
-        description: "Poached eggs and ham on English muffin with hollandaise",
-        price: 9.95,
-        category: categoryMap["Breakfast"],
-        image: "uploads/eggs-benedict.jpg",
-      },
-      {
-        name: "Granola Bowl",
-        description: "House-made granola with yogurt and fresh berries",
+        name: "Breakfast Bagel",
+        description: "Toasted bagel with cream cheese, tomato, and cucumber",
         price: 6.5,
         category: categoryMap["Breakfast"],
-        image: "uploads/granola-bowl.jpg",
+        image: "uploads/breakfast-bagel.jpg",
+        preparationTime: 5,
+        ingredients: [
+          {
+            resource: resourceMap["Bagels"],
+            quantity: 1,
+          },
+        ],
+      },
+      {
+        name: "Bacon & Egg Sandwich",
+        description: "Fried egg and crispy bacon on a brioche bun",
+        price: 8.0,
+        category: categoryMap["Breakfast"],
+        image: "uploads/bacon-egg-sandwich.jpg",
+        preparationTime: 8,
+        ingredients: [
+          {
+            resource: resourceMap["Bread (Sourdough)"],
+            quantity: 2,
+          },
+          {
+            resource: resourceMap["Eggs"],
+            quantity: 1,
+          },
+          {
+            resource: resourceMap["Bacon"],
+            quantity: 50,
+          },
+        ],
       },
 
       // Light Meals
       {
-        name: "Caesar Salad",
-        description: "Romaine lettuce, croutons, parmesan with caesar dressing",
-        price: 7.95,
+        name: "Quiche Lorraine",
+        description: "Classic French quiche with bacon and cheese",
+        price: 9.5,
         category: categoryMap["Light Meals"],
-        image: "uploads/caesar-salad.jpg",
+        image: "uploads/quiche.jpg",
+        preparationTime: 2, // Pre-made, just needs heating
+        ingredients: [],
       },
       {
-        name: "Quinoa Bowl",
-        description:
-          "Quinoa with roasted vegetables, avocado, and tahini dressing",
-        price: 9.25,
+        name: "Greek Salad",
+        description: "Fresh vegetables with feta and olives",
+        price: 10.0,
         category: categoryMap["Light Meals"],
-        image: "uploads/quinoa-bowl.jpg",
-      },
-      {
-        name: "Soup of the Day",
-        description: "Chef's daily selection served with artisan bread",
-        price: 5.95,
-        category: categoryMap["Light Meals"],
-        image: "uploads/soup.jpg",
-      },
-      {
-        name: "Acai Bowl",
-        description: "Acai smoothie topped with granola, banana, and berries",
-        price: 8.95,
-        category: categoryMap["Light Meals"],
-        image: "uploads/acai-bowl.jpg",
+        image: "uploads/greek-salad.jpg",
+        preparationTime: 7,
+        ingredients: [],
       },
 
       // Snacks
       {
-        name: "Bagel with Cream Cheese",
-        description: "Fresh baked bagel with choice of cream cheese",
-        price: 3.95,
+        name: "Granola Bar",
+        description: "Homemade oats and honey granola bar",
+        price: 3.0,
         category: categoryMap["Snacks"],
-        image: "uploads/bagel-cream-cheese.jpg",
-      },
-      {
-        name: "Hummus & Pita",
-        description: "House-made hummus served with warm pita bread",
-        price: 4.5,
-        category: categoryMap["Snacks"],
-        image: "uploads/hummus-pita.jpg",
+        image: "uploads/granola-bar.jpg",
+        preparationTime: 1,
+        ingredients: [],
       },
       {
         name: "Mixed Nuts",
-        description: "Premium roasted mixed nuts with sea salt",
-        price: 3.25,
+        description: "Assorted roasted nuts with sea salt",
+        price: 4.0,
         category: categoryMap["Snacks"],
         image: "uploads/mixed-nuts.jpg",
-      },
-      {
-        name: "Energy Bar",
-        description: "House-made energy bar with dates, nuts, and seeds",
-        price: 2.95,
-        category: categoryMap["Snacks"],
-        image: "uploads/energy-bar.jpg",
-      },
-      {
-        name: "Chips & Salsa",
-        description: "Crispy tortilla chips with fresh house-made salsa",
-        price: 4.25,
-        category: categoryMap["Snacks"],
-        image: "uploads/chips-salsa.jpg",
+        preparationTime: 1,
+        ingredients: [],
       },
     ];
 
-    console.log("\n🍽️  Creating Menu Items...");
-    console.log("-".repeat(50));
+    console.log("\n🍽️ Creating Menu Items...");
+    const createdMenuItems = await MenuItem.insertMany(menuItemsData);
 
-    // Create menu items one by one with detailed logging
-    const createdMenuItems = [];
-    let currentCategory = "";
-
-    for (let i = 0; i < menuItemsData.length; i++) {
-      const itemData = menuItemsData[i];
-
-      // Find category name for logging
-      const categoryName = Object.keys(categoryMap).find((key) =>
-        categoryMap[key].equals(itemData.category)
-      );
-
-      // Print category header when we switch categories
-      if (categoryName !== currentCategory) {
-        currentCategory = categoryName;
-        console.log(`\n📂 ${currentCategory.toUpperCase()}:`);
-        console.log("   " + "-".repeat(categoryName.length + 2));
-      }
-
-      try {
-        const newMenuItem = new MenuItem(itemData);
-        const savedMenuItem = await newMenuItem.save();
-        createdMenuItems.push(savedMenuItem);
-
-        console.log(
-          `   ✅ ${i + 1}/${menuItemsData.length}: "${savedMenuItem.name}" - $${
-            savedMenuItem.price
-          } (ID: ${savedMenuItem._id})`
-        );
-      } catch (error) {
-        console.error(
-          `   ❌ Error creating item "${itemData.name}":`,
-          error.message
-        );
-      }
-    }
-
-    console.log("\n" + "=".repeat(50));
-    console.log("🎉 SEEDER COMPLETED SUCCESSFULLY!");
-    console.log("=".repeat(50));
+    console.log("\n✅ SEEDER COMPLETED SUCCESSFULLY!");
     console.log(`📊 Summary:`);
-    console.log(
-      `   • Categories created: ${createdCategories.length}/${categoriesData.length}`
-    );
-    console.log(
-      `   • Menu items created: ${createdMenuItems.length}/${menuItemsData.length}`
-    );
-    console.log(
-      `   • Total items in database: ${
-        createdCategories.length + createdMenuItems.length
-      }`
-    );
-    console.log("=".repeat(50));
+    console.log(`   • Categories created: ${createdCategories.length}`);
+    console.log(`   • Resources created: ${createdResources.length}`);
+    console.log(`   • Menu items created: ${createdMenuItems.length}`);
   } catch (error) {
     console.error("❌ SEEDER FAILED:", error);
     console.error("Full error:", error.stack);
@@ -529,7 +792,7 @@ const runSeeder = async () => {
     await connectDB();
     console.log("✅ Database connected successfully!");
 
-    await createCategoriesAndMenuItems();
+    await createCategoriesResourcesAndMenuItems();
   } catch (error) {
     console.error("❌ Fatal error:", error);
   } finally {

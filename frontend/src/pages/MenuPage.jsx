@@ -3,7 +3,17 @@ import Header from "../components/Header";
 import { useInView } from "framer-motion";
 import { motion } from "framer-motion";
 import { useRef } from "react";
-import { Button, IconButton, Alert, Typography, Box } from "@mui/material";
+import {
+  Button,
+  IconButton,
+  Alert,
+  Typography,
+  Box,
+  Select,
+  MenuItem,
+  InputLabel,
+  FormControl,
+} from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
 import CustomCard from "../components/Card";
@@ -241,7 +251,7 @@ const MenuPage = ({ cart, setCart }) => {
 
       {/* Category Filter Buttons */}
       <motion.div
-        className="flex flex-col items-center w-full px-8"
+        className="flex flex-col items-center w-full px-8 mt-10"
         variants={containerVariants}
         initial="hidden"
         animate={isInView ? "visible" : "hidden"}
@@ -250,34 +260,81 @@ const MenuPage = ({ cart, setCart }) => {
           sx={{
             display: "flex",
             flexWrap: "wrap",
-            justifyContent: "center",
+            justifyContent: "space-between",
             gap: 1,
             mb: 4,
+            width: "100%",
+            maxWidth: "100%",
           }}
         >
-          {categories.map((category) => (
-            <Button
-              key={category}
-              onClick={() => setSelectedCategory(category)}
+          {/* Mobile Select Dropdown */}
+          <Box sx={{ display: { xs: "flex", md: "none" }, width: "100%" }}>
+            <FormControl
+              fullWidth
               sx={{
-                backgroundColor:
-                  selectedCategory === category ? "#6F4E37" : "#DA9F5B",
-                color: "white",
-                "&:hover": {
-                  backgroundColor:
-                    selectedCategory === category ? "#5C4132" : "#c48f51",
+                "& .MuiOutlinedInput-root": {
+                  "& fieldset": { borderColor: "#DA9F5B" },
+                  "&:hover fieldset": { borderColor: "#c48f51" },
+                  "&.Mui-focused fieldset": {
+                    borderColor: "#DA9F5B",
+                  },
                 },
-                margin: "0.5rem",
-                textTransform: "none",
-                px: 3,
-                py: 1,
-                marginTop: "5rem",
-                width: "10rem",
+                "& .MuiInputLabel-root": {
+                  color: "#DA9F5B",
+                  "&.Mui-focused": {
+                    color: "#DA9F5B",
+                  },
+                },
               }}
             >
-              {category}
-            </Button>
-          ))}
+              <InputLabel>{t("filter_by_category")}</InputLabel>
+              <Select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                label={t("filter_by_category")}
+              >
+                {categories.map((category) => (
+                  <MenuItem key={category} value={category}>
+                    {category}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
+
+          {/* Desktop Buttons */}
+          <Box
+            sx={{
+              display: { xs: "none", md: "flex" },
+              flexWrap: "wrap",
+              justifyContent: "center",
+              gap: 1,
+            }}
+          >
+            {categories.map((category) => (
+              <Button
+                key={category}
+                onClick={() => setSelectedCategory(category)}
+                sx={{
+                  backgroundColor:
+                    selectedCategory === category ? "#6F4E37" : "#DA9F5B",
+                  color: "white",
+                  "&:hover": {
+                    backgroundColor:
+                      selectedCategory === category ? "#5C4132" : "#c48f51",
+                  },
+                  margin: "0.5rem",
+                  textTransform: "none",
+                  px: 3,
+                  py: 1,
+                  width: "12rem",
+                  height: "4rem",
+                }}
+              >
+                {category}
+              </Button>
+            ))}
+          </Box>
         </Box>
       </motion.div>
 
