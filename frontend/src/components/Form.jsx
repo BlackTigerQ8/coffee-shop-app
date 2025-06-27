@@ -12,6 +12,7 @@ import {
   DialogActions,
   InputAdornment,
 } from "@mui/material";
+import IngredientsManager from "./IngredientsManager";
 
 const Form = ({
   fields,
@@ -98,18 +99,37 @@ const Form = ({
   const handleSubmit = (e) => {
     e.preventDefault();
     if (validate()) {
-      // Check if we need to create FormData (for file uploads)
       const hasFileField = fields.some((field) => field.type === "file");
 
       if (hasFileField) {
         const formDataObj = new FormData();
+
+        // First append the image if it exists
+        if (formData.image instanceof File) {
+          formDataObj.append("image", formData.image);
+        }
+
+        // Then append all other fields
         Object.keys(formData).forEach((key) => {
-          if (formData[key] !== null && formData[key] !== undefined) {
-            formDataObj.append(key, formData[key]);
-            // Add this logging
-            console.log("Appending to FormData:", key, formData[key]);
+          if (
+            key !== "image" &&
+            formData[key] !== null &&
+            formData[key] !== undefined &&
+            formData[key] !== ""
+          ) {
+            // For ingredients array, only include resource and quantity
+            if (key === "ingredients") {
+              const cleanedIngredients = formData[key].map((ingredient) => ({
+                resource: ingredient.resource,
+                quantity: ingredient.quantity,
+              }));
+              formDataObj.append(key, JSON.stringify(cleanedIngredients));
+            } else {
+              formDataObj.append(key, formData[key]);
+            }
           }
         });
+
         onSubmit(formDataObj, initialValues._id);
       } else {
         onSubmit(formData, initialValues._id);
@@ -212,6 +232,20 @@ const Form = ({
               <FormHelperText>{errors[field.name]}</FormHelperText>
             )}
           </FormControl>
+        );
+
+      case "ingredients":
+        return (
+          <IngredientsManager
+            resources={field.resources}
+            value={formData[field.name] || []}
+            onChange={(newValue) => {
+              setFormData({
+                ...formData,
+                [field.name]: newValue,
+              });
+            }}
+          />
         );
 
       case "file":

@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import Header from "../components/Header";
-import { motion } from "framer-motion";
 import { useInView } from "framer-motion";
+import { motion } from "framer-motion";
 import { useRef } from "react";
-import { Button, IconButton, Alert } from "@mui/material";
+import { Button, IconButton, Alert, Typography, Box } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
 import CustomCard from "../components/Card";
@@ -15,12 +15,14 @@ import { fetchMenuItems } from "../redux/menuSlice";
 import Backdrop from "../components/Backdrop";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
+
 const MenuPage = ({ cart, setCart }) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { margin: "-100px" });
   const dispatch = useDispatch();
   const { t } = useTranslation();
   const API_URL = import.meta.env.VITE_API_URL;
+  const [selectedCategory, setSelectedCategory] = useState("All");
 
   const { menuItems = [], status, error } = useSelector((state) => state.menu);
   const isLoading = status === "loading";
@@ -31,16 +33,19 @@ const MenuPage = ({ cart, setCart }) => {
     dispatch(fetchMenuItems());
   }, [dispatch]);
 
-  // Group items by category
-  const groupedItems = menuItems?.reduce((acc, item) => {
-    // Safely access category name, fallback to "Other" if category is undefined
-    const categoryName = item?.category?.name || "Other";
-    if (!acc[categoryName]) {
-      acc[categoryName] = [];
-    }
-    acc[categoryName].push(item);
-    return acc;
-  }, {});
+  // Get unique categories from menu items
+  const categories = [
+    "All",
+    ...new Set(menuItems.map((item) => item?.category?.name || "Other")),
+  ];
+
+  // Filter items based on selected category
+  const filteredItems =
+    selectedCategory === "All"
+      ? menuItems
+      : menuItems.filter(
+          (item) => (item?.category?.name || "Other") === selectedCategory
+        );
 
   const containerVariants = {
     hidden: {
@@ -126,141 +131,210 @@ const MenuPage = ({ cart, setCart }) => {
     return <Alert severity="error">Error: {error}</Alert>;
   }
 
+  // Render menu item card
+  const renderMenuItem = (item) => (
+    <motion.div
+      key={item._id}
+      variants={cardVariants}
+      whileHover={{ scale: item.isAvailable ? 1.02 : 1 }}
+      transition={{ duration: 0.2 }}
+      style={{
+        opacity: item.isAvailable ? 1 : 0.6,
+        position: "relative",
+      }}
+    >
+      <CustomCard>
+        {!item.isAvailable && (
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(0,0,0,0.5)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 1,
+            }}
+          >
+            <Typography
+              variant="h6"
+              sx={{
+                backgroundColor: "rgba(0,0,0,0.7)",
+                color: "white",
+                padding: "8px 16px",
+                borderRadius: "4px",
+              }}
+            >
+              {t("currently_unavailable")}
+            </Typography>
+          </div>
+        )}
+        <img
+          src={`${API_URL}/${item.image}`}
+          alt={item.name}
+          crossOrigin="anonymous"
+          onError={(e) => {
+            console.error("Failed to load image:", e.target.src);
+            e.target.onerror = null;
+            e.target.src = CardImg;
+          }}
+          className="w-full h-40 object-cover"
+        />
+        <div className="px-4 mt-3">
+          <h1 className="text-xl font-semibold">{item.name}</h1>
+          <p className="mb-2">{item.description}</p>
+          <p className="mb-2">{item.price.toFixed(3)}KWD</p>
+          <div className="flex items-center gap-2 justify-between">
+            <Button
+              variant="contained"
+              size="small"
+              disabled={getItemQuantity(item.id) === 0 || !item.isAvailable}
+              onClick={() => {
+                const qty = getItemQuantity(item.id);
+                for (let i = 0; i < qty; i++) {
+                  addToCart(item);
+                }
+              }}
+              sx={{
+                backgroundColor: "#6F4E37",
+                "&:hover": {
+                  backgroundColor: "#5C4132",
+                },
+                minWidth: "auto",
+                px: 2,
+              }}
+            >
+              Add
+            </Button>
+            <div className="flex justify-end items-center gap-1">
+              <IconButton
+                size="small"
+                onClick={() => removeFromCart(item.id)}
+                disabled={getItemQuantity(item.id) === 0 || !item.isAvailable}
+              >
+                <RemoveIcon />
+              </IconButton>
+              <span className="w-8 text-center">
+                {getItemQuantity(item.id)}
+              </span>
+              <IconButton
+                size="small"
+                onClick={() => addToCart(item)}
+                disabled={!item.isAvailable}
+              >
+                <AddIcon />
+              </IconButton>
+            </div>
+          </div>
+        </div>
+      </CustomCard>
+    </motion.div>
+  );
+
   return (
     <div ref={ref}>
       <Backdrop isOpen={isLoading} />
-      <Header
-        title="Our Menu"
-        subtitle="Choose your favorite drink and enjoy the best coffee in town"
-      />
+      <Header title={t("our_menu")} subtitle={t("our_menu_subtitle")} />
+
+      {/* Category Filter Buttons */}
       <motion.div
-        className="flex flex-col items-end w-full p-8"
+        className="flex flex-col items-center w-full px-8"
         variants={containerVariants}
         initial="hidden"
         animate={isInView ? "visible" : "hidden"}
       >
-        {(userInfo?.role === "Admin" || userInfo?.role === "Barista") && (
-          <Button
-            onClick={() => navigate("/menu/dashboard")}
-            sx={{
-              backgroundColor: "#DA9F5B",
-              "&:hover": {
-                backgroundColor: "#c48f51",
-              },
-              color: "white",
-              fontWeight: "bold",
-              textTransform: "uppercase",
-              fontSize: "1rem",
-              padding: "0.5rem 1rem",
-              borderRadius: "0.5rem",
-            }}
-          >
-            Manage Menu
-          </Button>
-        )}
+        <Box
+          sx={{
+            display: "flex",
+            flexWrap: "wrap",
+            justifyContent: "center",
+            gap: 1,
+            mb: 4,
+          }}
+        >
+          {categories.map((category) => (
+            <Button
+              key={category}
+              onClick={() => setSelectedCategory(category)}
+              sx={{
+                backgroundColor:
+                  selectedCategory === category ? "#6F4E37" : "#DA9F5B",
+                color: "white",
+                "&:hover": {
+                  backgroundColor:
+                    selectedCategory === category ? "#5C4132" : "#c48f51",
+                },
+                margin: "0.5rem",
+                textTransform: "none",
+                px: 3,
+                py: 1,
+                marginTop: "5rem",
+                width: "10rem",
+              }}
+            >
+              {category}
+            </Button>
+          ))}
+        </Box>
       </motion.div>
+
+      {/* Menu Items */}
       <motion.div
         className="flex flex-col items-center w-full p-8"
         variants={containerVariants}
         initial="hidden"
         animate={isInView ? "visible" : "hidden"}
       >
-        {Object.entries(groupedItems).map(([category, items]) => (
+        {selectedCategory === "All" ? (
+          // Show all categories when "All" is selected
+          Object.entries(
+            filteredItems.reduce((acc, item) => {
+              const categoryName = item?.category?.name || "Other";
+              if (!acc[categoryName]) {
+                acc[categoryName] = [];
+              }
+              acc[categoryName].push(item);
+              return acc;
+            }, {})
+          ).map(([category, items]) => (
+            <motion.div
+              key={category}
+              className="w-full max-w-7xl mb-12"
+              variants={categoryVariants}
+            >
+              <motion.h2
+                className="text-3xl font-bold mb-6 text-center"
+                variants={categoryVariants}
+              >
+                {category}
+              </motion.h2>
+              <motion.div
+                className="flex flex-wrap gap-6 justify-center"
+                variants={containerVariants}
+              >
+                {items.map(renderMenuItem)}
+              </motion.div>
+            </motion.div>
+          ))
+        ) : (
+          // Show only the selected category's items
           <motion.div
-            key={category}
             className="w-full max-w-7xl mb-12"
             variants={categoryVariants}
           >
-            <motion.h2
-              className="text-3xl font-bold mb-6 text-center"
-              variants={categoryVariants}
-            >
-              {category}
-            </motion.h2>
             <motion.div
               className="flex flex-wrap gap-6 justify-center"
               variants={containerVariants}
             >
-              {items.length > 0 ? (
-                items.map((item) => (
-                  <motion.div
-                    key={item._id}
-                    variants={cardVariants}
-                    whileHover={{ scale: 1.02 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <CustomCard>
-                      <img
-                        src={`${API_URL}/${item.image}`}
-                        alt={item.name}
-                        crossOrigin="anonymous"
-                        onError={(e) => {
-                          console.error("Failed to load image:", e.target.src);
-                          e.target.onerror = null;
-                          e.target.src = CardImg;
-                        }}
-                        className="w-full h-40 object-cover"
-                      />
-                      <div className="px-4 mt-3">
-                        <h1 className="text-xl font-semibold">{item.name}</h1>
-                        <p className="mb-2">{item.description}</p>
-                        <p className="mb-2">${item.price.toFixed(2)}</p>
-                        <div className="flex items-center gap-2 justify-between">
-                          <Button
-                            variant="contained"
-                            size="small"
-                            disabled={getItemQuantity(item.id) === 0}
-                            onClick={() => {
-                              const qty = getItemQuantity(item.id);
-                              for (let i = 0; i < qty; i++) {
-                                addToCart(item);
-                              }
-                            }}
-                            sx={{
-                              backgroundColor: "#6F4E37",
-                              "&:hover": {
-                                backgroundColor: "#5C4132",
-                              },
-                              minWidth: "auto",
-                              px: 2,
-                            }}
-                          >
-                            Add
-                          </Button>
-                          <div className="flex justify-end items-center gap-1">
-                            <IconButton
-                              size="small"
-                              onClick={() => removeFromCart(item.id)}
-                              disabled={getItemQuantity(item.id) === 0}
-                            >
-                              <RemoveIcon />
-                            </IconButton>
-                            <span className="w-8 text-center">
-                              {getItemQuantity(item.id)}
-                            </span>
-                            <IconButton
-                              size="small"
-                              onClick={() => addToCart(item)}
-                            >
-                              <AddIcon />
-                            </IconButton>
-                          </div>
-                        </div>
-                      </div>
-                    </CustomCard>
-                  </motion.div>
-                ))
-              ) : (
-                <Alert severity="error">
-                  <h2 className="text-2xl text-secondary mb-4">
-                    {t("no_menu_items_available")}
-                  </h2>
-                </Alert>
-              )}
+              {filteredItems.map(renderMenuItem)}
             </motion.div>
           </motion.div>
-        ))}
+        )}
       </motion.div>
+
       <Footer />
       <BackToTop />
     </div>

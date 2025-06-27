@@ -1,4 +1,5 @@
 const MenuItem = require("../models/menuModel");
+const Resource = require("../models/resourceModel");
 
 // @desc    Get all menu items
 // @route   GET /api/menu
@@ -7,6 +8,7 @@ const getAllMenuItems = async (req, res) => {
   try {
     const menuItems = await MenuItem.find()
       .populate("category")
+      .populate("ingredients.resource")
       .sort({ category: 1 });
     res.status(200).json({
       status: "Success",
@@ -30,11 +32,40 @@ const createMenuItem = async (req, res) => {
     const uploadedFile = req.file;
     const filePath = uploadedFile ? uploadedFile.path : null;
 
+    // Validate ingredients
+    if (!req.body.ingredients) {
+      return res.status(400).json({
+        status: "Error",
+        message: "Ingredients are required",
+      });
+    }
+
+    const ingredients = JSON.parse(req.body.ingredients);
+
+    // Validate each ingredient has enough stock
+    for (let ingredient of ingredients) {
+      const resource = await Resource.findById(ingredient.resource);
+      if (!resource) {
+        return res.status(400).json({
+          status: "Error",
+          message: `Resource ${ingredient.resource} not found`,
+        });
+      }
+      if (resource.currentStock < ingredient.quantity) {
+        return res.status(400).json({
+          status: "Error",
+          message: `Insufficient stock for ${resource.name}`,
+        });
+      }
+    }
+
     const menuItemData = {
       name: req.body.name,
       price: req.body.price,
       category: req.body.category,
       description: req.body.description,
+      ingredients: ingredients,
+      preparationTime: req.body.preparationTime,
       image: filePath,
     };
 
@@ -87,9 +118,42 @@ const getMenuItem = async (req, res) => {
 // @access  Private (Admin/Barista)
 const updateMenuItem = async (req, res) => {
   try {
-    const updateData = req.file
-      ? { ...req.body, image: req.file.path }
-      : { ...req.body };
+    let updateData = { ...req.body };
+
+    // Handle file upload
+    if (req.file) {
+      updateData.image = req.file.path;
+    }
+
+    // Handle ingredients
+    if (updateData.ingredients) {
+      try {
+        // Parse ingredients if it's a string
+        updateData.ingredients =
+          typeof updateData.ingredients === "string"
+            ? JSON.parse(updateData.ingredients)
+            : updateData.ingredients;
+
+        // Validate ingredients structure
+        if (!Array.isArray(updateData.ingredients)) {
+          throw new Error("Ingredients must be an array");
+        }
+
+        // Validate each ingredient
+        for (let ingredient of updateData.ingredients) {
+          if (!ingredient.resource || !ingredient.quantity) {
+            throw new Error(
+              "Each ingredient must have a resource and quantity"
+            );
+          }
+        }
+      } catch (error) {
+        return res.status(400).json({
+          status: "Error",
+          message: `Invalid ingredients format: ${error.message}`,
+        });
+      }
+    }
 
     const menuItem = await MenuItem.findByIdAndUpdate(
       req.params.id,

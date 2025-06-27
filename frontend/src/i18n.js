@@ -179,8 +179,9 @@ i18n
           currentStock_required: "Current stock is required",
           minimumStock_required: "Minimum stock is required",
           costPerUnit_required: "Cost per unit is required",
-          unit_required: "Unit is required",
-          quantity_required: "Quantity is required",
+          preparationTime_required: "Preparation time is required",
+          resource_already_added:
+            "{{name}} is already added to the ingredients list",
 
           ///MENU MANAGEMENT///
           menu_management_title: "Menu Management",
@@ -204,6 +205,18 @@ i18n
           categories: "Categories",
           manage_menu: "Manage Menu",
           filtered_from: "Filtered from",
+          currently_unavailable: "Currently Unavailable",
+          no_items_in_category: "No items in this category",
+          enable_item: "Enable Item",
+          disable_item: "Disable Item",
+          itemEnabled: "Item enabled successfully",
+          itemDisabled: "Item disabled successfully",
+          delete_item: "Delete Item",
+          edit_item: "Edit Item",
+          ingredients: "Ingredients",
+          our_menu: "Our Menu",
+          our_menu_subtitle:
+            "Choose your favorite drink and enjoy the best coffee in town",
 
           ///STORAGE/RESOURCES///
           storage: "Storage",
@@ -453,8 +466,10 @@ i18n
           currentStock_required: "المخزون الحالي مطلوب",
           minimumStock_required: "الحد الأدنى للمخزون مطلوب",
           costPerUnit_required: "التكلفة لكل وحدة مطلوبة",
+          preparationTime_required: "وقت التحضير مطلوب",
           unit_required: "الوحدة مطلوبة",
           quantity_required: "الكمية مطلوبة",
+          resource_already_added: "{{name}} مضاف بالفعل إلى قائمة المكونات",
 
           ///MENU MANAGEMENT///
           menu_management_title: "إدارة القائمة",
@@ -478,6 +493,18 @@ i18n
           categories: "الأقسام",
           manage_menu: "إدارة القائمة",
           filtered_from: "تصفية من",
+          currently_unavailable: "غير متوفر حاليا",
+          no_items_in_category: "لا يوجد عناصر في هذه الفئة",
+          enable_item: "تفعيل العنصر",
+          disable_item: "تعطيل العنصر",
+          itemEnabled: "تم تفعيل العنصر بنجاح",
+          itemDisabled: "تم تعطيل العنصر بنجاح",
+          delete_item: "حذف العنصر",
+          edit_item: "تعديل العنصر",
+          ingredients: "المكونات",
+          our_menu: "القائمة",
+          our_menu_subtitle:
+            "اختر المشروب المفضل لديك واستمتع بأفضل قهوة في الكويت",
 
           ///STORAGE/RESOURCES///
           storage: "المخزن",
@@ -508,8 +535,6 @@ i18n
           current_stock_required: "المخزون الحالي مطلوب",
           minimum_stock_required: "الحد الأدنى للمخزون مطلوب",
           cost_per_unit_required: "التكلفة لكل وحدة مطلوبة",
-          unit_required: "الوحدة مطلوبة",
-          quantity_required: "الكمية مطلوبة",
 
           ///DIALOG MESSAGES///
           confirm_delete: "تأكيد الحذف",

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
 import {
   Box,
@@ -10,12 +10,16 @@ import {
   Typography,
   Pagination,
   Button,
+  ToggleButton,
+  Tooltip,
 } from "@mui/material";
 import {
   Search as SearchIcon,
   Clear as ClearIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
+  ToggleOn as ToggleOnIcon,
+  ToggleOff as ToggleOffIcon,
 } from "@mui/icons-material";
 import Table from "./Table";
 import Form from "./Form";
@@ -29,6 +33,7 @@ import {
   updateMenuItem,
   deleteMenuItem,
   fetchMenuItems,
+  toggleMenuItemAvailability,
 } from "../redux/menuSlice";
 import CardImg from "../assets/card.jpg";
 
@@ -43,6 +48,7 @@ const MenuItemsTable = React.forwardRef(
     const [currentItem, setCurrentItem] = useState(null);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [itemToDelete, setItemToDelete] = useState(null);
+    const { resources } = useSelector((state) => state.resource);
 
     const API_URL = import.meta.env.VITE_API_URL;
 
@@ -103,6 +109,20 @@ const MenuItemsTable = React.forwardRef(
       setDeleteDialogOpen(true);
     };
 
+    const handleToggleAvailability = async (item) => {
+      try {
+        await dispatch(
+          toggleMenuItemAvailability({
+            menuId: item._id,
+            isAvailable: !item.isAvailable,
+          })
+        );
+        dispatch(fetchMenuItems());
+      } catch (error) {
+        console.error("Error toggling availability:", error);
+      }
+    };
+
     const handleSubmit = async (formData, id) => {
       setIsLoading(true);
       try {
@@ -126,6 +146,22 @@ const MenuItemsTable = React.forwardRef(
     const getInitialFormData = (item) => {
       if (!item) return {};
 
+      // Prepare ingredients with display information
+      const preparedIngredients =
+        item.ingredients?.map((ingredient) => {
+          // Find the full resource information from the resources array
+          const resourceInfo = resources.find(
+            (r) => r._id === (ingredient.resource._id || ingredient.resource)
+          );
+
+          return {
+            resource: ingredient.resource._id || ingredient.resource,
+            quantity: ingredient.quantity,
+            resourceName: resourceInfo?.name || "",
+            unit: resourceInfo?.unit || "",
+          };
+        }) || [];
+
       return {
         _id: item?._id,
         name: item.name || "",
@@ -135,11 +171,13 @@ const MenuItemsTable = React.forwardRef(
           typeof item.category === "object"
             ? item.category?._id
             : item.category || "",
+        ingredients: preparedIngredients,
+        preparationTime: item.preparationTime || 0,
       };
     };
 
     // Get form configuration
-    const formConfig = getMenuItemFormConfig(categories, t);
+    const formConfig = getMenuItemFormConfig(categories, resources, t);
 
     const handleDeleteConfirm = async () => {
       if (itemToDelete) {
@@ -187,18 +225,32 @@ const MenuItemsTable = React.forwardRef(
           {item.category?.name || "No Category"}
         </td>
         <td className="p-4">
-          <IconButton
-            onClick={() => handleEdit(item)}
-            sx={{ color: "#DA9F5B" }}
+          <Tooltip title={t("edit_item")}>
+            <IconButton
+              onClick={() => handleEdit(item)}
+              sx={{ color: "#DA9F5B" }}
+            >
+              <EditIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title={t("delete_item")}>
+            <IconButton
+              onClick={() => handleDelete(item)}
+              sx={{ color: "error.main" }}
+            >
+              <DeleteIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip
+            title={item.isAvailable ? t("disable_item") : t("enable_item")}
           >
-            <EditIcon />
-          </IconButton>
-          <IconButton
-            onClick={() => handleDelete(item)}
-            sx={{ color: "error.main" }}
-          >
-            <DeleteIcon />
-          </IconButton>
+            <IconButton
+              onClick={() => handleToggleAvailability(item)}
+              sx={{ color: item.isAvailable ? "#4CAF50" : "#FF4D4F" }}
+            >
+              {item.isAvailable ? <ToggleOnIcon /> : <ToggleOffIcon />}
+            </IconButton>
+          </Tooltip>
         </td>
       </tr>
     );

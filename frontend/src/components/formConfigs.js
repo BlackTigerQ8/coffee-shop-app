@@ -1,5 +1,5 @@
 // Form configurations for different entity types
-export const getMenuItemFormConfig = (categories = [], t) => ({
+export const getMenuItemFormConfig = (categories = [], resources = [], t) => ({
   fields: [
     {
       name: "name",
@@ -32,6 +32,22 @@ export const getMenuItemFormConfig = (categories = [], t) => ({
         value: typeof category === "object" ? category._id : category,
         label: typeof category === "object" ? category.name : category,
       })),
+    },
+    {
+      name: "ingredients",
+      label: t("ingredients"),
+      type: "ingredients",
+      required: true,
+      resources: resources,
+    },
+    {
+      name: "preparationTime",
+      label: t("preparation_time"),
+      type: "number",
+      required: true,
+      min: 1,
+      step: 1,
+      unit: t("minutes"),
     },
     {
       name: "image",

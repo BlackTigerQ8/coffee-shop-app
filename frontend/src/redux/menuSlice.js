@@ -106,6 +106,25 @@ export const deleteMenuItem = createAsyncThunk(
   }
 );
 
+export const toggleMenuItemAvailability = createAsyncThunk(
+  "menu/toggleAvailability",
+  async ({ menuId, isAvailable }, { getState }) => {
+    try {
+      const { token } = getState().user;
+      const response = await axios.put(
+        `${API_URL}/menu/${menuId}`,
+        { isAvailable },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response.data.message || error.message);
+    }
+  }
+);
+
 const menuSlice = createSlice({
   name: "menu",
   initialState,
@@ -174,6 +193,25 @@ const menuSlice = createSlice({
         dispatchToast(i18next.t("deleteMenuItemFulfilled"), "success");
       })
       .addCase(deleteMenuItem.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.error.message;
+        dispatchToast(i18next.t(state.error), "error");
+      });
+    // toggle menu item availability
+    builder
+      .addCase(toggleMenuItemAvailability.fulfilled, (state, action) => {
+        const updatedMenuItem = action.payload.data.item;
+        state.menuItems = state.menuItems.map((item) =>
+          item._id === updatedMenuItem._id ? updatedMenuItem : item
+        );
+        dispatchToast(
+          i18next.t(
+            updatedMenuItem.isAvailable ? "itemEnabled" : "itemDisabled"
+          ),
+          "success"
+        );
+      })
+      .addCase(toggleMenuItemAvailability.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.error.message;
         dispatchToast(i18next.t(state.error), "error");
