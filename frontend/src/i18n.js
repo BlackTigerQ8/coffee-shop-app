@@ -96,6 +96,7 @@ i18n
           profileImageRejected: "Profile image upload failed",
           messageSent: "Message sent successfully",
           messageError: "Message sending failed",
+          unauthorized: "Unauthorized",
 
           ///USER PROFILE///
           user_profile_title: "My Profile",
@@ -385,6 +386,7 @@ i18n
           profileImageRejected: "فشل رفع الصورة",
           messageSent: "تم إرسال الرسالة بنجاح",
           messageError: "فشل إرسال الرسالة",
+          unauthorized: "غير مصرح لك بالدخول",
 
           ///USER PROFILE///
           user_profile_title: "الملف الشخصي",

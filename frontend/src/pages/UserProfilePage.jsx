@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useInView } from "framer-motion";
 import Header from "../components/Header";
@@ -24,6 +24,7 @@ import {
 } from "@mui/icons-material";
 import { useDispatch, useSelector } from "react-redux";
 import { updateUser } from "../redux/usersSlice";
+import { setUser } from "../redux/userSlice";
 
 const UserProfilePage = () => {
   const ref = useRef(null);
@@ -45,6 +46,26 @@ const UserProfilePage = () => {
     address: userInfo?.address || "",
   });
 
+  const API_URL = import.meta.env.VITE_API_URL;
+
+  useEffect(() => {
+    if (userInfo?.image) {
+      setProfileImage(userInfo.image);
+    }
+  }, [userInfo]);
+
+  useEffect(() => {
+    if (userInfo) {
+      setFormData({
+        firstName: userInfo.firstName || "",
+        lastName: userInfo.lastName || "",
+        email: userInfo.email || "",
+        phone: userInfo.phone || "",
+        address: userInfo.address || "",
+      });
+    }
+  }, [userInfo]);
+
   // Handle file selection
   const handleFileSelect = (file) => {
     if (file && file.type.startsWith("image/")) {
@@ -53,9 +74,6 @@ const UserProfilePage = () => {
         setProfileImage(e.target.result);
       };
       reader.readAsDataURL(file);
-    } else {
-      // Show error message for invalid file type
-      alert(t("invalid_image_file"));
     }
   };
 
@@ -134,22 +152,45 @@ const UserProfilePage = () => {
         }
       });
 
-      // If there's a new profile image, append it
       if (profileImage && profileImage.startsWith("data:image")) {
-        // Convert base64 to file
         const response = await fetch(profileImage);
         const blob = await response.blob();
         formDataToSend.append("image", blob, "profile-image.jpg");
       }
 
-      await dispatch(
+      const result = await dispatch(
         updateUser({
           userId: userInfo._id,
           formData: formDataToSend,
         })
       ).unwrap();
 
-      setIsEditing(false);
+      // Update Redux state to match login state structure
+      const token = localStorage.getItem("token");
+      const updatedUser = result.data.user;
+
+      dispatch(
+        setUser({
+          userInfo: updatedUser,
+          token: token,
+          user: updatedUser,
+          userRole: updatedUser.role,
+        })
+      );
+
+      // Force a refresh of the form data
+      setFormData({
+        firstName: updatedUser.firstName || "",
+        lastName: updatedUser.lastName || "",
+        email: updatedUser.email || "",
+        phone: updatedUser.phone || "",
+        address: updatedUser.address || "",
+      });
+
+      // Update profile image state if there's a new image
+      if (updatedUser.image) {
+        setProfileImage(updatedUser.image);
+      }
     } catch (error) {
       console.error("Failed to update profile:", error);
     } finally {
@@ -174,17 +215,19 @@ const UserProfilePage = () => {
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
         >
-          <Avatar
-            src={profileImage}
-            sx={{
-              width: 120,
-              height: 120,
-              bgcolor: "#DA9F5B",
-              fontSize: "3rem",
+          <img
+            src={`${API_URL}/${userInfo?.image || profileImage}`}
+            alt={userInfo?.firstName || "Profile Image"}
+            crossOrigin="anonymous"
+            onError={(e) => {
+              console.error("Failed to load image:", e.target.src);
+              e.target.onerror = null;
+              e.target.src = `data:image/svg+xml,${encodeURIComponent(
+                '<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 24 24"><path fill="#DA9F5B" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>'
+              )}`;
             }}
-          >
-            {!profileImage && <PersonIcon sx={{ fontSize: "3rem" }} />}
-          </Avatar>
+            className="w-[120px] h-[120px] rounded-full object-cover"
+          />
 
           {/* Overlay for hover effect */}
           <div className="absolute inset-0 rounded-full bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-300 flex items-center justify-center">
@@ -214,12 +257,37 @@ const UserProfilePage = () => {
         </motion.p>
 
         {/* Remove photo button - only show if there's a profile image */}
-        {profileImage && (
+        {(userInfo?.image || profileImage) && (
           <Button
             size="small"
             onClick={(e) => {
               e.stopPropagation();
-              setProfileImage(null);
+              // Create FormData with empty image
+              const formDataToSend = new FormData();
+              formDataToSend.append("image", ""); // Send empty string to remove image
+
+              // Dispatch update
+              dispatch(
+                updateUser({
+                  userId: userInfo._id,
+                  formData: formDataToSend,
+                })
+              ).then((result) => {
+                if (result.payload) {
+                  const updatedUser = result.payload.data.user;
+                  // Update Redux state
+                  dispatch(
+                    setUser({
+                      userInfo: updatedUser,
+                      token: localStorage.getItem("token"),
+                      user: updatedUser,
+                      userRole: updatedUser.role,
+                    })
+                  );
+                  // Clear local image state
+                  setProfileImage(null);
+                }
+              });
             }}
             sx={{
               color: "#DA9F5B",
@@ -242,7 +310,6 @@ const UserProfilePage = () => {
           onChange={(e) =>
             setFormData({ ...formData, firstName: e.target.value })
           }
-          disabled={!isEditing}
           sx={textFieldStyles}
         />
         <TextField
@@ -252,7 +319,6 @@ const UserProfilePage = () => {
           onChange={(e) =>
             setFormData({ ...formData, lastName: e.target.value })
           }
-          disabled={!isEditing}
           sx={textFieldStyles}
         />
         <TextField
@@ -260,7 +326,6 @@ const UserProfilePage = () => {
           label={t("email")}
           value={formData.email}
           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-          disabled={!isEditing}
           sx={textFieldStyles}
         />
         <TextField
@@ -268,7 +333,6 @@ const UserProfilePage = () => {
           label={t("phone")}
           value={formData.phone}
           onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-          disabled={!isEditing}
           sx={textFieldStyles}
         />
         <TextField
@@ -278,7 +342,6 @@ const UserProfilePage = () => {
           onChange={(e) =>
             setFormData({ ...formData, address: e.target.value })
           }
-          disabled={!isEditing}
           multiline
           rows={3}
           sx={textFieldStyles}
@@ -286,11 +349,11 @@ const UserProfilePage = () => {
         />
       </div>
 
-      <div className="flex justify-end">
+      <div className="flex justify-end mt-6">
         <Button
           variant="contained"
-          startIcon={isEditing ? <SaveIcon /> : <EditIcon />}
-          onClick={isEditing ? handleSaveProfile : () => setIsEditing(true)}
+          startIcon={<SaveIcon />}
+          onClick={handleSaveProfile}
           disabled={isSaving}
           sx={{
             backgroundColor: "#DA9F5B",
@@ -299,7 +362,7 @@ const UserProfilePage = () => {
             },
           }}
         >
-          {isEditing ? t("save_changes") : t("edit_profile")}
+          {isSaving ? t("updating") : t("update_profile")}
         </Button>
       </div>
     </motion.div>
