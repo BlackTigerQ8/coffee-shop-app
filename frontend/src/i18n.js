@@ -176,6 +176,11 @@ i18n
           add_new_category: "Add New Category",
           create_new_category: "Create New Category",
           create: "Create",
+          currentStock_required: "Current stock is required",
+          minimumStock_required: "Minimum stock is required",
+          costPerUnit_required: "Cost per unit is required",
+          unit_required: "Unit is required",
+          quantity_required: "Quantity is required",
 
           ///MENU MANAGEMENT///
           menu_management_title: "Menu Management",
@@ -445,6 +450,11 @@ i18n
           add_new_category: "إضافة قائمة جديدة",
           create_new_category: "إنشاء قائمة جديدة",
           create: "إنشاء",
+          currentStock_required: "المخزون الحالي مطلوب",
+          minimumStock_required: "الحد الأدنى للمخزون مطلوب",
+          costPerUnit_required: "التكلفة لكل وحدة مطلوبة",
+          unit_required: "الوحدة مطلوبة",
+          quantity_required: "الكمية مطلوبة",
 
           ///MENU MANAGEMENT///
           menu_management_title: "إدارة القائمة",

@@ -336,7 +336,23 @@ const ResourcesTable = React.forwardRef(
             }}
           />
 
-          <FormControl sx={{ minWidth: 200 }}>
+          <FormControl
+            sx={{
+              minWidth: 200,
+              "& .MuiOutlinedInput-root": {
+                "& fieldset": { borderColor: "#DA9F5B" },
+                "&:hover fieldset": { borderColor: "#c48f51" },
+                "&.Mui-focused fieldset": {
+                  borderColor: "#DA9F5B",
+                },
+              },
+              "& .MuiInputLabel-root": {
+                "&.Mui-focused": {
+                  color: "#DA9F5B",
+                },
+              },
+            }}
+          >
             <InputLabel>{t("filter_by_category")}</InputLabel>
             <Select
               value={categoryFilter}

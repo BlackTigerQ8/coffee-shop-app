@@ -34,10 +34,20 @@ const Form = ({
 
   const handleChange = (e) => {
     const { name, value, type, files } = e.target;
-    setFormData({
-      ...formData,
-      [name]: type === "file" ? files[0] : value,
-    });
+
+    // Only handle files if it's actually a file input AND files exist
+    if (type === "file" && files?.length > 0) {
+      setFormData((prev) => ({
+        ...prev,
+        image: files[0], // Always use "image" as the key for file uploads
+      }));
+    } else {
+      // For all other input types, use the regular value
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
 
     // Clear error when user starts typing
     if (errors[name]) {
@@ -96,6 +106,8 @@ const Form = ({
         Object.keys(formData).forEach((key) => {
           if (formData[key] !== null && formData[key] !== undefined) {
             formDataObj.append(key, formData[key]);
+            // Add this logging
+            console.log("Appending to FormData:", key, formData[key]);
           }
         });
         onSubmit(formDataObj, initialValues._id);
