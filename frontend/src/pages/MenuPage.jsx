@@ -22,11 +22,12 @@ import Footer from "../components/Footer";
 import BackToTop from "../components/BackToTop";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchMenuItems } from "../redux/menuSlice";
+import { fetchCart, addToCart, updateCartItem } from "../redux/cartSlice";
 import Backdrop from "../components/Backdrop";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
-const MenuPage = ({ cart, setCart }) => {
+const MenuPage = () => {
   const ref = useRef(null);
   const isInView = useInView(ref, { margin: "-100px" });
   const dispatch = useDispatch();
@@ -35,13 +36,22 @@ const MenuPage = ({ cart, setCart }) => {
   const [selectedCategory, setSelectedCategory] = useState("All");
 
   const { menuItems = [], status, error } = useSelector((state) => state.menu);
-  const isLoading = status === "loading";
-  const { userInfo } = useSelector((state) => state.user);
+  const { items: cartItems = [], status: cartStatus } = useSelector(
+    (state) => state.cart
+  );
+  const { userInfo, token } = useSelector((state) => state.user);
   const navigate = useNavigate();
+
+  const isLoading = status === "loading" || cartStatus === "loading";
+  const isAuthenticated = !!(userInfo && token);
 
   useEffect(() => {
     dispatch(fetchMenuItems());
-  }, [dispatch]);
+    // Fetch cart if user is logged in
+    if (isAuthenticated) {
+      dispatch(fetchCart());
+    }
+  }, [dispatch, isAuthenticated]);
 
   // Get unique categories from menu items
   const categories = [
@@ -105,36 +115,33 @@ const MenuPage = ({ cart, setCart }) => {
     },
   };
 
-  const addToCart = (item) => {
-    const existingItem = cart.find((cartItem) => cartItem.id === item.id);
-    if (existingItem) {
-      setCart(
-        cart.map((cartItem) =>
-          cartItem.id === item.id
-            ? { ...cartItem, quantity: cartItem.quantity + 1 }
-            : cartItem
-        )
-      );
-    } else {
-      setCart([...cart, { ...item, quantity: 1 }]);
+  const handleAddToCart = (item) => {
+    if (!isAuthenticated) {
+      navigate("/login");
+      return;
+    }
+    dispatch(addToCart({ menuItemId: item._id, quantity: 1 }));
+  };
+
+  const handleRemoveFromCart = (itemId) => {
+    if (!isAuthenticated) {
+      navigate("/login");
+      return;
+    }
+
+    const cartItem = cartItems.find((item) => item.menuItem._id === itemId);
+
+    if (cartItem) {
+      const newQuantity = cartItem.quantity - 1;
+      dispatch(updateCartItem({ menuItemId: itemId, quantity: newQuantity }));
     }
   };
 
-  const removeFromCart = (itemId) => {
-    setCart(
-      cart
-        .map((item) =>
-          item.id === itemId && item.quantity > 0
-            ? { ...item, quantity: item.quantity - 1 }
-            : item
-        )
-        .filter((item) => item.quantity > 0)
-    );
-  };
-
   const getItemQuantity = (itemId) => {
-    const item = cart.find((item) => item.id === itemId);
-    return item ? item.quantity : 0;
+    if (!isAuthenticated) return 0;
+
+    const cartItem = cartItems.find((item) => item.menuItem._id === itemId);
+    return cartItem ? cartItem.quantity : 0;
   };
 
   if (error) {
@@ -201,13 +208,8 @@ const MenuPage = ({ cart, setCart }) => {
             <Button
               variant="contained"
               size="small"
-              disabled={getItemQuantity(item.id) === 0 || !item.isAvailable}
-              onClick={() => {
-                const qty = getItemQuantity(item.id);
-                for (let i = 0; i < qty; i++) {
-                  addToCart(item);
-                }
-              }}
+              onClick={() => handleAddToCart(item)}
+              disabled={!item.isAvailable}
               sx={{
                 backgroundColor: "#6F4E37",
                 "&:hover": {
@@ -217,27 +219,31 @@ const MenuPage = ({ cart, setCart }) => {
                 px: 2,
               }}
             >
-              Add
+              {isAuthenticated ? "Add" : "Login to Add"}
             </Button>
-            <div className="flex justify-end items-center gap-1">
-              <IconButton
-                size="small"
-                onClick={() => removeFromCart(item.id)}
-                disabled={getItemQuantity(item.id) === 0 || !item.isAvailable}
-              >
-                <RemoveIcon />
-              </IconButton>
-              <span className="w-8 text-center">
-                {getItemQuantity(item.id)}
-              </span>
-              <IconButton
-                size="small"
-                onClick={() => addToCart(item)}
-                disabled={!item.isAvailable}
-              >
-                <AddIcon />
-              </IconButton>
-            </div>
+            {isAuthenticated && (
+              <div className="flex justify-end items-center gap-1">
+                <IconButton
+                  size="small"
+                  onClick={() => handleRemoveFromCart(item._id)}
+                  disabled={
+                    getItemQuantity(item._id) === 0 || !item.isAvailable
+                  }
+                >
+                  <RemoveIcon />
+                </IconButton>
+                <span className="w-8 text-center">
+                  {getItemQuantity(item._id)}
+                </span>
+                <IconButton
+                  size="small"
+                  onClick={() => handleAddToCart(item)}
+                  disabled={!item.isAvailable}
+                >
+                  <AddIcon />
+                </IconButton>
+              </div>
+            )}
           </div>
         </div>
       </CustomCard>
@@ -260,11 +266,11 @@ const MenuPage = ({ cart, setCart }) => {
           sx={{
             display: "flex",
             flexWrap: "wrap",
-            justifyContent: "space-between",
+            justifyContent: "center",
             gap: 1,
             mb: 4,
             width: "100%",
-            maxWidth: "100%",
+            maxWidth: "800px",
           }}
         >
           {/* Mobile Select Dropdown */}
@@ -293,6 +299,9 @@ const MenuPage = ({ cart, setCart }) => {
                 onChange={(e) => setSelectedCategory(e.target.value)}
                 label={t("filter_by_category")}
               >
+                <MenuItem value="All">
+                  <em>{t("all_categories")}</em>
+                </MenuItem>
                 {categories.map((category) => (
                   <MenuItem key={category} value={category}>
                     {category}
@@ -317,18 +326,17 @@ const MenuPage = ({ cart, setCart }) => {
                 onClick={() => setSelectedCategory(category)}
                 sx={{
                   backgroundColor:
-                    selectedCategory === category ? "#6F4E37" : "#DA9F5B",
-                  color: "white",
+                    selectedCategory === category ? "#6F4E37" : "inherit",
+                  color: selectedCategory === category ? "white" : "#6F4E37",
                   "&:hover": {
                     backgroundColor:
                       selectedCategory === category ? "#5C4132" : "#c48f51",
                   },
-                  margin: "0.5rem",
+                  border: "1px solid #6F4E37",
+                  borderRadius: "25px",
+                  margin: "0.25rem",
                   textTransform: "none",
                   px: 3,
-                  py: 1,
-                  width: "12rem",
-                  height: "4rem",
                 }}
               >
                 {category}

@@ -77,11 +77,6 @@ const protectedRoutes = [
     element: MenuManagement,
     roles: ["Admin", "Barista"],
   },
-  {
-    path: "/menu/create",
-    element: CreateMenu,
-    roles: ["Admin", "Barista"],
-  },
 ];
 
 // Error routes configuration

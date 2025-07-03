@@ -5,6 +5,7 @@ const userRouter = require("./routes/userRoutes");
 const menuRouter = require("./routes/menuRoutes");
 const categoryRouter = require("./routes/categoryRoutes");
 const resourceRouter = require("./routes/resourceRoutes");
+const cartRouter = require("./routes/cartRoutes");
 const path = require("path");
 
 const app = express();
@@ -27,6 +28,7 @@ app.use("/api/users", userRouter);
 app.use("/api/menu", menuRouter);
 app.use("/api/categories", categoryRouter);
 app.use("/api/resources", resourceRouter);
+app.use("/api/cart", cartRouter);
 app.use("/api/uploads", express.static(path.join(__dirname, "uploads")));
 
 module.exports = app;

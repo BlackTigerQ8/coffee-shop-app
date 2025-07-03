@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import Header from "../components/Header";
 import { motion } from "framer-motion";
 import { useInView } from "framer-motion";
@@ -13,20 +13,51 @@ import {
   TableHead,
   TableRow,
   Paper,
+  Alert,
 } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  fetchCart,
+  updateCartItem,
+  removeFromCart,
+  addToCart,
+} from "../redux/cartSlice";
 import Footer from "../components/Footer";
 import BackToTop from "../components/BackToTop";
+import Backdrop from "../components/Backdrop";
+import CardImg from "../assets/card.jpg";
 
-const CartPage = ({ cart = [], setCart = () => {} }) => {
+const CartPage = () => {
   const ref = useRef(null);
   const isInView = useInView(ref, { margin: "-100px" });
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const { t } = useTranslation();
+  const API_URL = import.meta.env.VITE_API_URL;
+
+  const {
+    items: cartItems = [],
+    totalAmount,
+    status,
+    error,
+  } = useSelector((state) => state.cart);
+  const { userInfo, token } = useSelector((state) => state.user);
+
+  const isLoading = status === "loading";
+  const isAuthenticated = !!(userInfo && token);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate("/login");
+      return;
+    }
+    dispatch(fetchCart());
+  }, [dispatch, isAuthenticated, navigate]);
 
   const containerVariants = {
     hidden: {
@@ -43,24 +74,41 @@ const CartPage = ({ cart = [], setCart = () => {} }) => {
     },
   };
 
-  const updateQuantity = (itemId, newQuantity) => {
+  const updateQuantity = (menuItemId, newQuantity) => {
     if (newQuantity === 0) {
-      setCart(cart.filter((item) => item.id !== itemId));
+      dispatch(removeFromCart(menuItemId));
     } else {
-      setCart(
-        cart.map((item) =>
-          item.id === itemId ? { ...item, quantity: newQuantity } : item
-        )
-      );
+      dispatch(updateCartItem({ menuItemId, quantity: newQuantity }));
     }
   };
 
-  const calculateTotal = () => {
-    return cart.reduce((total, item) => total + item.price * item.quantity, 0);
+  const handleRemoveItem = (menuItemId) => {
+    dispatch(removeFromCart(menuItemId));
   };
+
+  const handleAddOne = (menuItemId) => {
+    dispatch(addToCart({ menuItemId, quantity: 1 }));
+  };
+
+  if (!isAuthenticated) {
+    return null; // This will redirect in useEffect
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Header title={t("cart")} subtitle={t("cart_subtitle")} />
+        <div className="flex-grow container mx-auto px-4 py-8">
+          <Alert severity="error">Error: {error}</Alert>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div ref={ref} className="flex flex-col min-h-screen">
+      <Backdrop isOpen={isLoading} />
       <Header title={t("cart")} subtitle={t("cart_subtitle")} />
       <motion.div
         className="flex-grow container mx-auto px-4 py-8"
@@ -68,7 +116,7 @@ const CartPage = ({ cart = [], setCart = () => {} }) => {
         initial="hidden"
         animate={isInView ? "visible" : "hidden"}
       >
-        {cart.length === 0 ? (
+        {cartItems.length === 0 ? (
           <div className="text-center py-12">
             <h2 className="text-2xl text-secondary mb-4">{t("cart_empty")}</h2>
             <Button
@@ -100,27 +148,41 @@ const CartPage = ({ cart = [], setCart = () => {} }) => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {cart.map((item) => (
-                      <TableRow key={item.id}>
+                    {cartItems.map((item) => (
+                      <TableRow key={item._id}>
                         <TableCell>
                           <div className="flex items-center gap-4">
                             <img
-                              src={item.image}
-                              alt={item.name}
+                              src={`${API_URL}/${item.menuItem.image}`}
+                              alt={item.menuItem.name}
+                              crossOrigin="anonymous"
+                              onError={(e) => {
+                                console.error(
+                                  "Failed to load image:",
+                                  e.target.src
+                                );
+                                e.target.onerror = null;
+                                e.target.src = CardImg;
+                              }}
                               className="w-16 h-16 object-cover rounded"
                             />
-                            <span className="font-semibold">{item.name}</span>
+                            <span className="font-semibold">
+                              {item.menuItem.name}
+                            </span>
                           </div>
                         </TableCell>
                         <TableCell align="right">
-                          ${item.price.toFixed(2)}
+                          {item.price.toFixed(3)}KWD
                         </TableCell>
                         <TableCell align="center">
                           <div className="flex items-center justify-center gap-2">
                             <IconButton
                               size="small"
                               onClick={() =>
-                                updateQuantity(item.id, item.quantity - 1)
+                                updateQuantity(
+                                  item.menuItem._id,
+                                  item.quantity - 1
+                                )
                               }
                             >
                               <RemoveIcon />
@@ -130,21 +192,19 @@ const CartPage = ({ cart = [], setCart = () => {} }) => {
                             </span>
                             <IconButton
                               size="small"
-                              onClick={() =>
-                                updateQuantity(item.id, item.quantity + 1)
-                              }
+                              onClick={() => handleAddOne(item.menuItem._id)}
                             >
                               <AddIcon />
                             </IconButton>
                           </div>
                         </TableCell>
                         <TableCell align="right">
-                          ${(item.price * item.quantity).toFixed(2)}
+                          {(item.price * item.quantity).toFixed(3)}KWD
                         </TableCell>
                         <TableCell align="center">
                           <IconButton
                             color="error"
-                            onClick={() => updateQuantity(item.id, 0)}
+                            onClick={() => handleRemoveItem(item.menuItem._id)}
                           >
                             <DeleteIcon />
                           </IconButton>
@@ -157,7 +217,7 @@ const CartPage = ({ cart = [], setCart = () => {} }) => {
                       </TableCell>
                       <TableCell align="right">
                         <span className="text-xl font-bold">
-                          ${calculateTotal().toFixed(2)}
+                          {totalAmount.toFixed(3)}KWD
                         </span>
                       </TableCell>
                       <TableCell />
@@ -169,24 +229,34 @@ const CartPage = ({ cart = [], setCart = () => {} }) => {
 
             {/* Mobile View */}
             <div className="md:hidden space-y-4">
-              {cart.map((item) => (
+              {cartItems.map((item) => (
                 <div
-                  key={item.id}
+                  key={item._id}
                   className="border-b border-gray-200 pb-4 last:border-b-0"
                 >
                   <div className="flex items-center gap-4 mb-3">
                     <img
-                      src={item.image}
-                      alt={item.name}
+                      src={`${API_URL}/${item.menuItem.image}`}
+                      alt={item.menuItem.name}
+                      crossOrigin="anonymous"
+                      onError={(e) => {
+                        console.error("Failed to load image:", e.target.src);
+                        e.target.onerror = null;
+                        e.target.src = CardImg;
+                      }}
                       className="w-20 h-20 object-cover rounded"
                     />
                     <div className="flex-grow">
-                      <h3 className="font-semibold text-lg">{item.name}</h3>
-                      <p className="text-gray-600">${item.price.toFixed(2)}</p>
+                      <h3 className="font-semibold text-lg">
+                        {item.menuItem.name}
+                      </h3>
+                      <p className="text-gray-600">
+                        {item.price.toFixed(3)}KWD
+                      </p>
                     </div>
                     <IconButton
                       color="error"
-                      onClick={() => updateQuantity(item.id, 0)}
+                      onClick={() => handleRemoveItem(item.menuItem._id)}
                       size="small"
                     >
                       <DeleteIcon />
@@ -198,7 +268,7 @@ const CartPage = ({ cart = [], setCart = () => {} }) => {
                       <IconButton
                         size="small"
                         onClick={() =>
-                          updateQuantity(item.id, item.quantity - 1)
+                          updateQuantity(item.menuItem._id, item.quantity - 1)
                         }
                       >
                         <RemoveIcon />
@@ -206,9 +276,7 @@ const CartPage = ({ cart = [], setCart = () => {} }) => {
                       <span className="w-8 text-center">{item.quantity}</span>
                       <IconButton
                         size="small"
-                        onClick={() =>
-                          updateQuantity(item.id, item.quantity + 1)
-                        }
+                        onClick={() => handleAddOne(item.menuItem._id)}
                       >
                         <AddIcon />
                       </IconButton>
@@ -216,7 +284,7 @@ const CartPage = ({ cart = [], setCart = () => {} }) => {
                     <div className="text-right">
                       <p className="text-sm text-gray-600">{t("subtotal")}</p>
                       <p className="font-semibold">
-                        ${(item.price * item.quantity).toFixed(2)}
+                        {(item.price * item.quantity).toFixed(3)}KWD
                       </p>
                     </div>
                   </div>
@@ -228,7 +296,7 @@ const CartPage = ({ cart = [], setCart = () => {} }) => {
                 <div className="flex justify-between items-center mb-6">
                   <span className="text-xl font-bold">{t("total")}:</span>
                   <span className="text-xl font-bold">
-                    ${calculateTotal().toFixed(2)}
+                    {totalAmount.toFixed(3)}KWD
                   </span>
                 </div>
               </div>

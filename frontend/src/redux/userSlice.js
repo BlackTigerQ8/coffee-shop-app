@@ -5,12 +5,20 @@ import i18next from "i18next";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-const initialState = {
-  userInfo: null,
-  status: "",
-  token: "",
-  userRole: "",
+// Initialize state from localStorage
+const getInitialState = () => {
+  const token = localStorage.getItem("token");
+  const userInfo = localStorage.getItem("userInfo");
+
+  return {
+    userInfo: userInfo ? JSON.parse(userInfo) : null,
+    status: "",
+    token: token || "",
+    userRole: userInfo ? JSON.parse(userInfo).role : "",
+  };
 };
+
+const initialState = getInitialState();
 
 const dispatchToast = (message, type) => {
   toast[type](message, {
@@ -109,15 +117,23 @@ const userSlice = createSlice({
       state.userInfo = action.payload.userInfo;
       state.userRole = action.payload.user.role;
       state.token = action.payload.token;
+      // Save to localStorage
+      localStorage.setItem("token", action.payload.token);
+      localStorage.setItem("userInfo", JSON.stringify(action.payload.userInfo));
     },
     updateUserInfo(state, action) {
       state.userInfo = action.payload;
+      // Update localStorage
+      localStorage.setItem("userInfo", JSON.stringify(action.payload));
     },
     logoutUser(state) {
       state.userInfo = null;
       state.userRole = "";
       state.token = "";
       state.status = "";
+      // Clear localStorage
+      localStorage.removeItem("token");
+      localStorage.removeItem("userInfo");
       dispatchToast(i18next.t("loggedOut"), "success");
     },
   },
@@ -132,7 +148,9 @@ const userSlice = createSlice({
         state.userInfo = user;
         state.token = action.payload.token;
         state.userRole = user.role;
+        // Save to localStorage
         localStorage.setItem("token", action.payload.token);
+        localStorage.setItem("userInfo", JSON.stringify(user));
         dispatchToast(i18next.t("loginUserFulfilled"), "success");
       })
       .addCase(loginUser.rejected, (state, action) => {
@@ -178,5 +196,5 @@ const userSlice = createSlice({
   },
 });
 
-export const { logoutUser, setUser } = userSlice.actions;
+export const { logoutUser, setUser, updateUserInfo } = userSlice.actions;
 export default userSlice.reducer;

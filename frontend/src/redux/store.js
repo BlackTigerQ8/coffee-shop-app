@@ -1,11 +1,12 @@
 import { configureStore, combineReducers } from "@reduxjs/toolkit";
 import userReducer from "./userSlice";
 import { persistStore, persistReducer } from "redux-persist";
-import storage from "redux-persist/lib/storage"; // defaults to localStorage for web
+import storage from "redux-persist/lib/storage";
 import usersReducer from "./usersSlice";
 import menuReducer from "./menuSlice";
 import categoryReducer from "./categorySlice";
 import resourceReducer from "./resourceSlice";
+import cartReducer from "./cartSlice";
 
 const persistConfig = {
   key: "root",
@@ -18,6 +19,7 @@ const rootReducer = combineReducers({
   menu: menuReducer,
   category: categoryReducer,
   resource: resourceReducer,
+  cart: cartReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
